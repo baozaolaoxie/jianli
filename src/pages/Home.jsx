@@ -60,7 +60,7 @@ const Home = () => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            暴躁老谢 | 创意导演
+            SHOW YOURSELF
           </Typography>
           <Typography 
             variant="h5" 
@@ -75,7 +75,7 @@ const Home = () => {
               mb: 5,
             }}
           >
-            10年广告创意经验 · 屡获国际奖项 · 专注品牌故事
+            展示您的才华作品 · 打造个性简历
           </Typography>
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
             <Button
@@ -175,7 +175,7 @@ const Home = () => {
             }
           }}
         >
-          我能为您带来什么
+          为什么选择我们
         </Typography>
         <Grid container spacing={5} justifyContent="center">
           <Grid item xs={12} sm={6} md={4}>
@@ -212,11 +212,11 @@ const Home = () => {
               }}
             >
               <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50', mb: 2 }}>
-                创意策划
+                简历制作
               </Typography>
               <Divider sx={{ width: '30%', mb: 3, borderColor: 'rgba(58,123,213,0.3)' }} />
               <Typography sx={{ color: '#546e7a', lineHeight: 1.7 }}>
-                从品牌定位到创意执行，提供全方位的创意策划服务，让您的品牌脱颖而出。
+                专为广告行业人士设计的简历模板，突出您的创意能力和专业技能，让您在求职中脱颖而出。
               </Typography>
             </Paper>
           </Grid>
@@ -254,11 +254,11 @@ const Home = () => {
               }}
             >
               <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50', mb: 2 }}>
-                视觉设计
+                作品展示
               </Typography>
               <Divider sx={{ width: '30%', mb: 3, borderColor: 'rgba(0,210,255,0.3)' }} />
               <Typography sx={{ color: '#546e7a', lineHeight: 1.7 }}>
-                专业的视觉设计服务，包括品牌形象、广告创意、UI/UX设计等，为您的品牌打造独特的视觉语言。
+                上传并展示您的最佳作品，支持多种媒体格式，让招聘者直观了解您的创意实力和专业水平。
               </Typography>
             </Paper>
           </Grid>
@@ -293,7 +293,7 @@ const Home = () => {
               }
             }}
           >
-            精选作品
+            功能特色
           </Typography>
           <Grid container spacing={4}>
             {[1, 2, 3].map((item) => (
@@ -348,14 +348,14 @@ const Home = () => {
                     }}
                   >
                     <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600 }}>
-                      {item === 1 && '品牌宣传片'}
-                      {item === 2 && '平面广告设计'}
-                      {item === 3 && '社交媒体营销'}
+                      {item === 1 && '个性化简历'}
+                      {item === 2 && '作品集管理'}
+                      {item === 3 && '专业技能展示'}
                     </Typography>
                     <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                      {item === 1 && '通过视觉语言讲述品牌故事'}
-                      {item === 2 && '创新的平面设计解决方案'}
-                      {item === 3 && '全方位的社交媒体策略'}
+                      {item === 1 && '打造专属于您的广告人简历'}
+                      {item === 2 && '轻松管理和展示您的创意作品'}
+                      {item === 3 && '突出您的专业技能和软件掌握程度'}
                     </Typography>
                   </Box>
                 </Paper>
@@ -422,7 +422,7 @@ const Home = () => {
             WebkitTextFillColor: 'transparent',
           }}
         >
-          准备好开始您的项目了吗？
+          准备好创建您的专业简历了吗？
         </Typography>
         <Typography 
           variant="h6" 
@@ -434,7 +434,7 @@ const Home = () => {
             mx: 'auto',
           }}
         >
-          无论您是需要一个完整的广告策划，还是寻找创意合作伙伴，我都期待与您交流。
+          只需简单几步，您就能创建一份专业的广告行业简历，展示您的才华和技能。
         </Typography>
         <Box sx={{ textAlign: 'center' }}>
           <Button
@@ -442,14 +442,14 @@ const Home = () => {
             color="primary"
             size="large"
             component={RouterLink}
-            to="/contact"
+            to="/show-you"
             sx={{
               px: 4,
               py: 1.5,
               fontSize: '1.1rem',
             }}
           >
-            立即联系
+            开始创建
           </Button>
         </Box>
       </Container>

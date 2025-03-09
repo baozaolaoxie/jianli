@@ -19,24 +19,15 @@ const Header = () => {
               flexGrow: { xs: 1, md: 0 }
             }}
           >
-            创意简历
+            SHOW YOURSELF
           </Typography>
 
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'center' }}>
             <Button component={RouterLink} to="/" color="inherit" sx={{ mx: 1 }}>
               首页
             </Button>
-            <Button component={RouterLink} to="/about" color="inherit" sx={{ mx: 1 }}>
-              关于我
-            </Button>
-            <Button component={RouterLink} to="/portfolio" color="inherit" sx={{ mx: 1 }}>
-              作品集
-            </Button>
-            <Button component={RouterLink} to="/skills" color="inherit" sx={{ mx: 1 }}>
-              专业技能
-            </Button>
-            <Button component={RouterLink} to="/contact" color="inherit" sx={{ mx: 1 }}>
-              联系方式
+            <Button component={RouterLink} to="/show-you" color="inherit" sx={{ mx: 1 }}>
+              SHOW YOU
             </Button>
           </Box>
 
@@ -44,10 +35,10 @@ const Header = () => {
             variant="contained"
             color="primary"
             component={RouterLink}
-            to="/contact"
+            to="/show-you"
             sx={{ display: { xs: 'none', md: 'block' } }}
           >
-            联系我
+            登录
           </Button>
         </Toolbar>
       </Container>

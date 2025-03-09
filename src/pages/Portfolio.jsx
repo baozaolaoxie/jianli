@@ -57,11 +57,10 @@ const Portfolio = () => {
     }
   ];
 
-  // 提取所有唯一的分类
-  const allCategories = ['全部', ...new Set(projects.map(project => project.category))];
-  
   // 状态管理
   const [selectedCategory, setSelectedCategory] = useState('全部');
+  
+
   const [filteredProjects, setFilteredProjects] = useState(projects);
   const [selectedProject, setSelectedProject] = useState(null);
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
@@ -189,7 +188,7 @@ const Portfolio = () => {
               },
             }}
           >
-            {allCategories.map((category) => (
+            {['全部', ...new Set(allProjects.map(project => project.category))].map((category) => (
               <Tab 
                 key={category} 
                 label={category} 

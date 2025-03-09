@@ -53,16 +53,17 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
       return (
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <video 
-            src={project.file} 
             controls 
-            autoPlay
+            src={project.file}
             style={{ 
               maxWidth: '100%', 
               maxHeight: '70vh',
               borderRadius: 8,
               boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
             }} 
-          />
+          >
+            您的浏览器不支持视频播放。
+          </video>
         </Box>
       );
     } else {

@@ -1,7 +1,33 @@
 import React from 'react';
-import { Container, Typography, Box, Grid, Paper, Divider, List, ListItem, ListItemText } from '@mui/material';
+import { Container, Typography, Box, Grid, Paper, Divider, List, ListItem, ListItemIcon, ListItemText, Button, LinearProgress } from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { Link as RouterLink } from 'react-router-dom';
 
 const About = () => {
+  // 技能数据
+  const technicalSkills = [
+    { name: 'Adobe Photoshop', level: 95 },
+    { name: 'Adobe Illustrator', level: 90 },
+    { name: 'Adobe Premiere Pro', level: 85 },
+    { name: 'Adobe After Effects', level: 80 },
+    { name: 'Figma', level: 85 },
+    { name: 'Sketch', level: 75 }
+  ];
+
+  const creativeSkills = [
+    '品牌策略规划',
+    '创意概念开发',
+    '视觉设计',
+    '内容营销策略',
+    '用户体验设计',
+    '广告文案创作',
+    '社交媒体营销',
+    '品牌故事叙述'
+  ];
+  
   return (
     <>
       {/* 个人简介头部 */}
@@ -122,97 +148,183 @@ const About = () => {
         </Container>
       </Box>
 
-      {/* 教育背景 */}
-      <Container maxWidth="md" sx={{ py: 8, position: 'relative' }}>
-        <Box 
-          sx={{
-            position: 'absolute',
-            top: '10%',
-            left: '-5%',
-            width: '25%',
-            height: '25%',
-            background: 'radial-gradient(circle, rgba(58,123,213,0.06) 0%, rgba(58,123,213,0) 70%)',
-            borderRadius: '50%',
-            filter: 'blur(40px)',
-            zIndex: -1,
+      {/* 作品集 */}
+      <Box sx={{ bgcolor: 'background.paper', py: 8 }}>
+        <Container maxWidth="lg">
+          <Typography 
+            variant="h3" 
+            component="h2" 
+            gutterBottom 
+            align="center" 
+            sx={{ 
+              mb: 6,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #3a7bd5 0%, #d53369 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -16,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 80,
+                height: 4,
+                background: 'linear-gradient(90deg, #3a7bd5, #d53369)',
+                borderRadius: 2,
+              }
+            }}
+          >
+            精选作品
+          </Typography>
+          <Grid container spacing={4}>
+            {[1, 2, 3].map((item) => (
+              <Grid item key={item} xs={12} sm={6} md={4}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    height: 280,
+                    backgroundImage: `url("/images/portfolio-${item}.jpg")`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    position: 'relative',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    transition: 'all 0.4s ease',
+                    '&:hover': {
+                      transform: 'translateY(-10px)',
+                      boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
+                      '& .overlay': {
+                        opacity: 1,
+                      },
+                      '& .content': {
+                        transform: 'translateY(0)',
+                      }
+                    },
+                  }}
+                >
+                  <Box
+                    className="overlay"
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 100%)',
+                      opacity: 0.6,
+                      transition: 'opacity 0.4s ease',
+                    }}
+                  />
+                  <Box
+                    className="content"
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      p: 3,
+                      color: 'white',
+                      transform: 'translateY(20px)',
+                      transition: 'transform 0.4s ease',
+                    }}
+                  >
+                    <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600 }}>
+                      {item === 1 && '品牌宣传片'}
+                      {item === 2 && '平面广告设计'}
+                      {item === 3 && '社交媒体营销'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                      {item === 1 && '通过视觉语言讲述品牌故事'}
+                      {item === 2 && '创新的平面设计解决方案'}
+                      {item === 3 && '全方位的社交媒体策略'}
+                    </Typography>
+                  </Box>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+          <Box sx={{ textAlign: 'center', mt: 6 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              component={RouterLink}
+              to="/portfolio"
+              size="large"
+              sx={{
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 8px 25px rgba(58,123,213,0.25)'
+                }
+              }}
+            >
+              查看更多作品
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* 联系方式 */}
+      <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Typography 
+          variant="h3" 
+          component="h2" 
+          gutterBottom 
+          align="center" 
+          sx={{ 
+            mb: 6,
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #3a7bd5 0%, #d53369 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 80,
+              height: 4,
+              background: 'linear-gradient(90deg, #3a7bd5, #d53369)',
+              borderRadius: 2,
+            }
           }}
-        />
-        <Typography variant="h4" component="h2" gutterBottom align="center" sx={{ 
-          mb: 6,
-          fontWeight: 700,
-          background: 'linear-gradient(135deg, #3a7bd5 0%, #d53369 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          position: 'relative',
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: -16,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 80,
-            height: 4,
-            background: 'linear-gradient(90deg, #3a7bd5, #d53369)',
-            borderRadius: 2,
-          }
-        }}>
-          教育背景
+        >
+          联系方式
         </Typography>
         
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ 
-              p: 4, 
-              height: '100%',
-              borderRadius: 4,
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.8)',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-              transition: 'all 0.4s ease',
-              '&:hover': {
-                transform: 'translateY(-5px)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
-              }
-            }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50' }}>
-                中央美术学院
-              </Typography>
-              <Typography color="text.secondary" gutterBottom sx={{ mb: 2, fontStyle: 'italic' }}>
-                视觉传达设计 | 硕士学位 (2009-2011)
-              </Typography>
-              <Typography sx={{ color: '#546e7a', lineHeight: 1.7 }}>
-                专注于品牌设计和广告创意研究，毕业设计获得院系优秀作品奖
-              </Typography>
-            </Paper>
+        <Grid container spacing={4} sx={{ mt: 2 }}>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <EmailIcon sx={{ mr: 2, color: 'primary.main' }} />
+              <Typography>contact@example.com</Typography>
+            </Box>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ 
-              p: 4, 
-              height: '100%',
-              borderRadius: 4,
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 100%)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.8)',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-              transition: 'all 0.4s ease',
-              '&:hover': {
-                transform: 'translateY(-5px)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
-              }
-            }}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50' }}>
-                浙江大学
-              </Typography>
-              <Typography color="text.secondary" gutterBottom sx={{ mb: 2, fontStyle: 'italic' }}>
-                艺术设计 | 学士学位 (2005-2009)
-              </Typography>
-              <Typography sx={{ color: '#546e7a', lineHeight: 1.7 }}>
-                主修广告设计，辅修市场营销，多次获得校级设计比赛奖项
-              </Typography>
-            </Paper>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <PhoneIcon sx={{ mr: 2, color: 'primary.main' }} />
+              <Typography>+86 123 4567 8910</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <LocationOnIcon sx={{ mr: 2, color: 'primary.main' }} />
+              <Typography>北京市朝阳区创意产业园</Typography>
+            </Box>
           </Grid>
         </Grid>
+        
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Button variant="contained" size="large" sx={{ borderRadius: 2 }}>
+            联系我
+          </Button>
+        </Box>
       </Container>
 
       {/* 个人技能 */}
@@ -254,7 +366,7 @@ const About = () => {
               borderRadius: 2,
             }
           }}>
-            专业技能
+            个人技能
           </Typography>
           
           <Grid container spacing={4}>
@@ -266,45 +378,41 @@ const About = () => {
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255,255,255,0.8)',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-                transition: 'all 0.4s ease',
-                '&:hover': {
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
-                }
+                height: '100%'
               }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50', mb: 2 }}>
-                  创意能力
+                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50', mb: 2 }}>
+                  设计技能
                 </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemText 
-                      primary="品牌策略规划" 
-                      secondary="深入理解品牌核心价值，制定有效的品牌传播策略" 
-                      primaryTypographyProps={{ fontWeight: 500, color: '#3a7bd5' }}
-                      secondaryTypographyProps={{ color: '#546e7a' }}
+                <Divider sx={{ width: '30%', mb: 3, borderColor: 'rgba(58,123,213,0.3)' }} />
+                
+                {technicalSkills.map((skill, index) => (
+                  <Box key={index} sx={{ mb: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 500, color: '#546e7a' }}>
+                        {skill.name}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#3a7bd5' }}>
+                        {skill.level}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={skill.level} 
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: 'rgba(58,123,213,0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 4,
+                          backgroundImage: 'linear-gradient(90deg, #3a7bd5, #00d2ff)'
+                        }
+                      }}
                     />
-                  </ListItem>
-                  <Divider component="li" sx={{ borderColor: 'rgba(58,123,213,0.1)' }} />
-                  <ListItem>
-                    <ListItemText 
-                      primary="创意概念开发" 
-                      secondary="能够快速产生原创创意概念，并将其转化为可执行的广告方案" 
-                      primaryTypographyProps={{ fontWeight: 500, color: '#3a7bd5' }}
-                      secondaryTypographyProps={{ color: '#546e7a' }}
-                    />
-                  </ListItem>
-                  <Divider component="li" sx={{ borderColor: 'rgba(58,123,213,0.1)' }} />
-                  <ListItem>
-                    <ListItemText 
-                      primary="故事叙述" 
-                      secondary="擅长通过引人入胜的故事传达品牌信息，创造情感共鸣" 
-                      primaryTypographyProps={{ fontWeight: 500, color: '#3a7bd5' }}
-                      secondaryTypographyProps={{ color: '#546e7a' }}
-                    />
-                  </ListItem>
-                </List>
+                  </Box>
+                ))}
               </Paper>
             </Grid>
+            
             <Grid item xs={12} md={6}>
               <Paper elevation={0} sx={{ 
                 p: 4,
@@ -313,42 +421,30 @@ const About = () => {
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255,255,255,0.8)',
                 boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-                transition: 'all 0.4s ease',
-                '&:hover': {
-                  transform: 'translateY(-5px)',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.08)',
-                }
+                height: '100%'
               }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50', mb: 2 }}>
-                  技术技能
+                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 600, color: '#2c3e50', mb: 2 }}>
+                  创意能力
                 </Typography>
+                <Divider sx={{ width: '30%', mb: 3, borderColor: 'rgba(213,51,105,0.3)' }} />
+                
                 <List>
-                  <ListItem>
-                    <ListItemText 
-                      primary="Adobe创意套件" 
-                      secondary="精通Photoshop、Illustrator、Premiere Pro等设计软件" 
-                      primaryTypographyProps={{ fontWeight: 500, color: '#d53369' }}
-                      secondaryTypographyProps={{ color: '#546e7a' }}
-                    />
-                  </ListItem>
-                  <Divider component="li" sx={{ borderColor: 'rgba(213,51,105,0.1)' }} />
-                  <ListItem>
-                    <ListItemText 
-                      primary="摄影与视频制作" 
-                      secondary="具备专业的摄影技巧和视频拍摄、剪辑能力" 
-                      primaryTypographyProps={{ fontWeight: 500, color: '#d53369' }}
-                      secondaryTypographyProps={{ color: '#546e7a' }}
-                    />
-                  </ListItem>
-                  <Divider component="li" sx={{ borderColor: 'rgba(213,51,105,0.1)' }} />
-                  <ListItem>
-                    <ListItemText 
-                      primary="数字营销工具" 
-                      secondary="熟悉各种数字营销平台和工具，能够策划并执行整合营销传播方案" 
-                      primaryTypographyProps={{ fontWeight: 500, color: '#d53369' }}
-                      secondaryTypographyProps={{ color: '#546e7a' }}
-                    />
-                  </ListItem>
+                  {creativeSkills.map((skill, index) => (
+                    <React.Fragment key={index}>
+                      <ListItem sx={{ py: 1.5 }}>
+                        <ListItemIcon>
+                          <CheckCircleOutlineIcon sx={{ color: '#d53369' }} />
+                        </ListItemIcon>
+                        <ListItemText 
+                          primary={skill} 
+                          primaryTypographyProps={{ fontWeight: 500, color: '#546e7a' }}
+                        />
+                      </ListItem>
+                      {index < creativeSkills.length - 1 && (
+                        <Divider variant="inset" component="li" sx={{ borderColor: 'rgba(213,51,105,0.1)' }} />
+                      )}
+                    </React.Fragment>
+                  ))}
                 </List>
               </Paper>
             </Grid>

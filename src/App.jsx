@@ -5,10 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import About from './pages/About';
-import Portfolio from './pages/Portfolio';
-import Skills from './pages/Skills';
-import Contact from './pages/Contact';
+import ShowYou from './pages/ShowYou';
 
 // 创建高级优雅的设计主题
 const theme = createTheme({
@@ -151,10 +148,7 @@ const App = () => {
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/portfolio" element={<Portfolio />} />
-        <Route path="/skills" element={<Skills />} />
-        <Route path="/contact" element={<Contact />} />
+        <Route path="/show-you" element={<ShowYou />} />
       </Routes>
       <Footer />
     </ThemeProvider>

@@ -15,8 +15,10 @@ import {
   Stack,
   CircularProgress,
   Alert,
-  Fade
+  Fade,
+  LinearProgress
 } from '@mui/material';
+import imageCompression from 'browser-image-compression';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -37,6 +39,9 @@ const UploadProject = ({ onUploadSuccess }) => {
   const [fileType, setFileType] = useState(null);
   const [cover, setCover] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailCover, setThumbnailCover] = useState(null);
+  const [compressionProgress, setCompressionProgress] = useState(0);
   const [tagInput, setTagInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState({
@@ -63,15 +68,49 @@ const UploadProject = ({ onUploadSuccess }) => {
     });
   };
 
-  const handleFileChange = (e) => {
+  // 压缩图片函数
+  const compressImage = async (imageFile, maxSizeMB = 0.3, maxWidthOrHeight = 800) => {
+    try {
+      setCompressionProgress(10);
+      const options = {
+        maxSizeMB,
+        maxWidthOrHeight,
+        useWebWorker: true,
+        onProgress: (progress) => {
+          setCompressionProgress(progress * 100);
+        }
+      };
+      
+      const compressedFile = await imageCompression(imageFile, options);
+      setCompressionProgress(100);
+      
+      // 延迟重置进度条，提供更好的用户体验
+      setTimeout(() => setCompressionProgress(0), 1000);
+      
+      return compressedFile;
+    } catch (error) {
+      console.error('图片压缩失败:', error);
+      setCompressionProgress(0);
+      return null;
+    }
+  };
+
+  const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
     setFile(selectedFile);
     if (selectedFile.type.startsWith('image/')) {
       setFileType('image');
+      // 为图片创建缩略图
+      const thumbnail = await compressImage(selectedFile);
+      if (thumbnail) {
+        setThumbnailFile(thumbnail);
+      }
     } else if (selectedFile.type.startsWith('video/')) {
       setFileType('video');
+      // 视频不进行压缩，但可以考虑提取第一帧作为缩略图
+      // 这里简化处理，直接使用原视频
     } else {
       setFileType('file');
     }
@@ -109,9 +148,10 @@ const UploadProject = ({ onUploadSuccess }) => {
     setFile(null);
     setFilePreview(null);
     setFileType(null);
+    setThumbnailFile(null);
   };
 
-  const handleCoverChange = (e) => {
+  const handleCoverChange = async (e) => {
     const selectedCover = e.target.files[0];
     if (!selectedCover) return;
     if (!selectedCover.type.startsWith('image/')) {
@@ -123,6 +163,13 @@ const UploadProject = ({ onUploadSuccess }) => {
       return;
     }
     setCover(selectedCover);
+    
+    // 为封面图片创建缩略图
+    const thumbnail = await compressImage(selectedCover, 0.1, 400);
+    if (thumbnail) {
+      setThumbnailCover(thumbnail);
+    }
+    
     setCoverPreview(URL.createObjectURL(selectedCover));
   };
 
@@ -132,6 +179,7 @@ const UploadProject = ({ onUploadSuccess }) => {
     }
     setCover(null);
     setCoverPreview(null);
+    setThumbnailCover(null);
   };
 
   const handleSubmit = async (e) => {
@@ -151,15 +199,36 @@ const UploadProject = ({ onUploadSuccess }) => {
 
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 将文件转换为base64
+      const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = error => reject(error);
+        });
+      };
+      
+      // 转换作品文件和封面图片
+      // 使用缩略图作为预览，原始文件作为完整内容
+      const fileData = file ? await fileToBase64(file) : null;
+      const thumbnailFileData = thumbnailFile ? await fileToBase64(thumbnailFile) : null;
+      const coverData = cover ? await fileToBase64(cover) : null;
+      const thumbnailCoverData = thumbnailCover ? await fileToBase64(thumbnailCover) : null;
+      
       const newProject = {
         id: Date.now(),
         ...formData,
-        file: filePreview,
+        file: fileData,                   // 原始文件（完整质量）
+        thumbnailFile: thumbnailFileData, // 缩略图文件（低质量，用于预览）
         fileType,
-        image: coverPreview,
+        image: thumbnailCoverData || coverData, // 优先使用缩略图封面
+        fullImage: coverData,             // 保存原始封面图片
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        status: 'active'
+        status: 'active',
+        hasFullContent: true              // 标记有完整内容可加载
       };
       
       if (onUploadSuccess) {
@@ -206,16 +275,26 @@ const UploadProject = ({ onUploadSuccess }) => {
           >
             <CloseIcon />
           </IconButton>
-          <img 
-            src={filePreview} 
-            alt="预览" 
-            style={{ 
-              width: '100%', 
-              borderRadius: 8, 
-              maxHeight: '300px', 
-              objectFit: 'cover' 
-            }} 
-          />
+          <>
+            {compressionProgress > 0 && compressionProgress < 100 && (
+              <Box sx={{ width: '100%', mb: 1 }}>
+                <LinearProgress variant="determinate" value={compressionProgress} />
+                <Typography variant="caption" color="text.secondary" align="center" display="block">
+                  压缩中... {Math.round(compressionProgress)}%
+                </Typography>
+              </Box>
+            )}
+            <img 
+              src={filePreview} 
+              alt="预览" 
+              style={{ 
+                width: '100%', 
+                borderRadius: 8, 
+                maxHeight: '300px', 
+                objectFit: 'cover' 
+              }} 
+            />
+          </>
         </Box>
       );
     } else if (fileType === 'video') {

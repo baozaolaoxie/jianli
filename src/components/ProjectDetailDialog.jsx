@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,11 +17,45 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 const ProjectDetailDialog = ({ open, onClose, project }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [fullContent, setFullContent] = useState(null);
+  
+  // 当对话框打开时，重置状态
+  useEffect(() => {
+    if (!open) {
+      setFullContent(null);
+    }
+  }, [open]);
+  
   if (!project) return null;
+
+  // 加载完整内容
+  const loadFullContent = () => {
+    if (project.hasFullContent && !fullContent) {
+      setIsLoading(true);
+      // 模拟网络延迟，实际应用中可能是从服务器加载
+      setTimeout(() => {
+        // 根据存储位置获取完整内容
+        // 1. 优先从fullContentFile加载（针对优化存储的情况）
+        // 2. 其次从file属性加载（针对未优化存储的情况）
+        // 3. 最后从fullContentImage加载（针对封面图片）
+        if (project.fullContentFile) {
+          setFullContent(project.fullContentFile);
+        } else if (project.file) {
+          setFullContent(project.file);
+        } else if (project.fullContentImage) {
+          setFullContent(project.fullContentImage);
+        }
+        setIsLoading(false);
+      }, 800);
+    }
+  };
+
 
   // 根据文件类型渲染不同的内容
   const renderContent = () => {
-    if (!project.file) {
+    // 如果没有任何内容可显示
+    if (!project.thumbnailFile && !project.file) {
       return (
         <Box sx={{ 
           textAlign: 'center', 
@@ -34,36 +68,106 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
       );
     }
 
+    // 确定要显示的内容：优先使用已加载的完整内容，其次是缩略图，最后是原始文件
+    const contentToShow = fullContent || project.thumbnailFile || project.file;
+    
     if (project.fileType === 'image') {
       return (
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Box sx={{ textAlign: 'center', mb: 3, position: 'relative' }}>
+          {isLoading && (
+            <Box sx={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              borderRadius: 8,
+              zIndex: 1
+            }}>
+              <Typography color="white">加载高清图片中...</Typography>
+            </Box>
+          )}
           <img 
-            src={project.file} 
+            src={contentToShow} 
             alt={project.title} 
             style={{ 
               maxWidth: '100%', 
               maxHeight: '70vh',
               borderRadius: 8,
-              boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
+              boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+              cursor: project.hasFullContent && !fullContent ? 'pointer' : 'default',
+              filter: isLoading ? 'blur(5px)' : 'none',
+              transition: 'filter 0.3s ease'
             }} 
+            onClick={loadFullContent}
           />
+          {project.hasFullContent && !fullContent && !isLoading && (
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                display: 'block', 
+                mt: 1, 
+                color: 'primary.light',
+                cursor: 'pointer'
+              }}
+              onClick={loadFullContent}
+            >
+              点击加载高清图片
+            </Typography>
+          )}
         </Box>
       );
     } else if (project.fileType === 'video') {
       return (
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Box sx={{ textAlign: 'center', mb: 3, position: 'relative' }}>
+          {isLoading && (
+            <Box sx={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              borderRadius: 8,
+              zIndex: 1
+            }}>
+              <Typography color="white">加载高清视频中...</Typography>
+            </Box>
+          )}
           <video 
             controls 
-            src={project.file}
+            src={contentToShow}
             style={{ 
               maxWidth: '100%', 
               maxHeight: '70vh',
               borderRadius: 8,
-              boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
-            }} 
-          >
-            您的浏览器不支持视频播放。
-          </video>
+              boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+              filter: isLoading ? 'blur(5px)' : 'none',
+              transition: 'filter 0.3s ease'
+            }}
+            onClick={project.hasFullContent && !fullContent ? loadFullContent : undefined}
+          />
+          {project.hasFullContent && !fullContent && !isLoading && (
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                display: 'block', 
+                mt: 1, 
+                color: 'primary.light',
+                cursor: 'pointer'
+              }}
+              onClick={loadFullContent}
+            >
+              点击加载高清视频
+            </Typography>
+          )}
         </Box>
       );
     } else {
@@ -77,13 +181,22 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
             mb: 3, 
             borderRadius: 2, 
             bgcolor: 'rgba(201, 164, 125, 0.1)',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
+            boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+            cursor: project.hasFullContent && !fullContent ? 'pointer' : 'default',
           }}
+          onClick={project.hasFullContent && !fullContent ? loadFullContent : undefined}
         >
           <InsertDriveFileIcon sx={{ fontSize: 40, mr: 2, color: 'primary.light' }} />
-          <Typography>
-            此文件类型无法在浏览器中预览
-          </Typography>
+          <Box>
+            <Typography>
+              此文件类型无法在浏览器中预览
+            </Typography>
+            {project.hasFullContent && !fullContent && !isLoading && (
+              <Typography variant="caption" color="primary.light">
+                点击加载完整文件
+              </Typography>
+            )}
+          </Box>
         </Box>
       );
     }

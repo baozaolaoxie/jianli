@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Container, Typography, Box, Grid, Paper, Divider, List, ListItem, ListItemIcon, ListItemText, Chip } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import EmailIcon from '@mui/icons-material/Email';
@@ -6,9 +6,25 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ChatIcon from '@mui/icons-material/Chat';
 import TwitterIcon from '@mui/icons-material/Twitter';
+import ProjectDetailDialog from './ProjectDetailDialog';
 
 const ResumePreview = ({ resumeData }) => {
   const { about, portfolio, skills, contact } = resumeData;
+  
+  // 作品详情预览状态
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [openDetailDialog, setOpenDetailDialog] = useState(false);
+  
+  // 处理作品点击预览
+  const handleProjectClick = (project) => {
+    setSelectedProject(project);
+    setOpenDetailDialog(true);
+  };
+  
+  // 处理详情对话框关闭
+  const handleCloseDetailDialog = () => {
+    setOpenDetailDialog(false);
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
@@ -78,12 +94,14 @@ const ResumePreview = ({ resumeData }) => {
             <Grid item key={index} xs={12} sm={6} md={4}>
               <Paper
                 elevation={0}
+                onClick={() => handleProjectClick(project)}
                 sx={{
                   borderRadius: 2,
                   overflow: 'hidden',
                   transition: 'all 0.3s ease',
                   background: 'linear-gradient(135deg, rgba(22,26,31,0.95) 0%, rgba(15,18,21,0.95) 100%)',
                   border: '1px solid rgba(201, 164, 125, 0.08)',
+                  cursor: 'pointer',
                   '&:hover': {
                     transform: 'translateY(-5px)',
                     boxShadow: '0 10px 30px rgba(201, 164, 125, 0.15)'
@@ -96,8 +114,54 @@ const ResumePreview = ({ resumeData }) => {
                     backgroundImage: `url(${project.image})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
+                    position: 'relative',
                   }}
-                />
+                >
+                  <Box 
+                    className="overlay"
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundColor: 'rgba(0,0,0,0.4)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      '&:hover': {
+                        opacity: 0.7
+                      }
+                    }}
+                  />
+                  <Box
+                    className="view-project"
+                    sx={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      opacity: 0,
+                      transition: 'all 0.3s ease',
+                      color: 'white',
+                      textAlign: 'center',
+                      width: '100%',
+                      '&:hover': {
+                        opacity: 1
+                      }
+                    }}
+                  >
+                    <Typography variant="button" sx={{ 
+                      fontWeight: 600,
+                      fontSize: '1rem',
+                      textTransform: 'none',
+                      borderBottom: '2px solid',
+                      borderColor: 'primary.main',
+                      pb: 0.5
+                    }}>
+                      查看详情
+                    </Typography>
+                  </Box>
+                </Box>
                 <Box sx={{ p: 2 }}>
                   <Typography variant="h6" gutterBottom>
                     {project.title}
@@ -241,6 +305,13 @@ const ResumePreview = ({ resumeData }) => {
           )}
         </Grid>
       </Paper>
+      
+      {/* 作品详情对话框 */}
+      <ProjectDetailDialog 
+        open={openDetailDialog}
+        onClose={handleCloseDetailDialog}
+        project={selectedProject}
+      />
     </Container>
   );
 };

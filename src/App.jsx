@@ -1,11 +1,13 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import ShowYou from './pages/ShowYou';
+import UserProfile from './pages/UserProfile';
+import Login from './components/Login';
 
 // 创建高级优雅的设计主题
 const theme = createTheme({
@@ -142,13 +144,51 @@ const theme = createTheme({
 });
 
 const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
+  
+  // 检查用户是否已登录
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      setIsLoggedIn(true);
+      setUserData(JSON.parse(storedUserData));
+    }
+  }, []);
+  
+  // 处理用户登录
+  const handleLogin = (userData) => {
+    // 保存用户数据到localStorage
+    localStorage.setItem('userData', JSON.stringify(userData));
+    setIsLoggedIn(true);
+    setUserData(userData);
+    navigate('/profile');
+  };
+  
+  // 处理用户登出
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    setIsLoggedIn(false);
+    setUserData(null);
+    navigate('/');
+  };
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Header />
+      <Header isLoggedIn={isLoggedIn} userData={userData} onLogout={handleLogout} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/show-you" element={<ShowYou />} />
+        <Route path="/login" element={
+          isLoggedIn ? <Navigate to="/profile" /> : <Login onLogin={handleLogin} />
+        } />
+        <Route path="/show-you" element={
+          isLoggedIn ? <ShowYou /> : <Navigate to="/login" />
+        } />
+        <Route path="/profile" element={
+          isLoggedIn ? <UserProfile user={userData} onLogout={handleLogout} /> : <Navigate to="/login" />
+        } />
       </Routes>
       <Footer />
     </ThemeProvider>

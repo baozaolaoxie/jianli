@@ -28,10 +28,6 @@ import ProjectDetailDialog from '../components/ProjectDetailDialog';
 import ShareResumeDialog from '../components/ShareResumeDialog';
 
 const ShowYou = () => {
-  // 用户登录状态
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  
   // 当前选中的编辑标签
   const [currentTab, setCurrentTab] = useState(0);
   
@@ -75,8 +71,8 @@ const ShowYou = () => {
   
   // 处理登录成功
   const handleLoginSuccess = (userData) => {
-    setIsLoggedIn(true);
-    setUser(userData);
+    // setIsLoggedIn(true);
+    // setUser(userData);
     // 实际应用中，这里应该从后端获取用户的简历数据
     // 这里使用模拟数据
     setResumeData({
@@ -227,34 +223,118 @@ const ShowYou = () => {
     
     // 模拟API请求延迟
     setTimeout(() => {
-      // 实际应用中，这里应该将数据发送到后端保存
-      console.log('保存简历数据:', resumeData);
-      
-      // 生成简历ID
-      const newResumeId = generateResumeId();
-      setResumeId(newResumeId);
-      
-      // 显示成功提示
-      setSaveStatus({
-        show: true,
-        type: 'success',
-        message: '简历保存成功！您的简历已更新。',
-      });
-      
-      // 显示简历预览
-      setShowPreview(true);
-      
-      // 5秒后隐藏提示
-      setTimeout(() => {
-        setSaveStatus(prev => ({ ...prev, show: false }));
-      }, 5000);
+      try {
+        // 验证必要的数据字段
+        if (!resumeData.about.name || !resumeData.about.title) {
+          throw new Error('姓名和职位是必填项');
+        }
+
+        // 生成简历ID
+        const newResumeId = generateResumeId();
+        setResumeId(newResumeId);
+        
+        // 优化portfolio数据，减少存储大小，实现渐进式加载
+        const optimizedPortfolio = resumeData.portfolio.map(project => {
+          // 创建项目的浅拷贝
+          const optimizedProject = {...project};
+          
+          // 处理作品文件的渐进式加载
+          if (optimizedProject.file && optimizedProject.file.startsWith('data:')) {
+            // 确保项目有缩略图标记
+            optimizedProject.hasFullContent = true;
+            
+            // 如果已有缩略图，则在保存时只保留缩略图，完整内容将在查看时按需加载
+            if (optimizedProject.thumbnailFile) {
+              // 将完整文件内容存储到单独的属性中
+              optimizedProject.fullContentFile = optimizedProject.file;
+              // 在主文件属性中只保留缩略图
+              optimizedProject.file = null;
+            }
+          }
+          
+          // 处理封面图片的渐进式加载
+          if (optimizedProject.fullImage && optimizedProject.fullImage.startsWith('data:')) {
+            // 如果有缩略图封面，则在保存时优先使用缩略图
+            if (optimizedProject.image && optimizedProject.image !== optimizedProject.fullImage) {
+              // 将完整图片内容存储到单独的属性中，按需加载
+              optimizedProject.fullContentImage = optimizedProject.fullImage;
+              // 删除重复的完整图片数据以节省空间
+              optimizedProject.fullImage = null;
+            }
+          }
+          
+          return optimizedProject;
+        });
+        
+        // 将简历数据保存到localStorage，以便在个人主页中使用
+        const resumeToSave = {
+          ...resumeData,
+          portfolio: optimizedPortfolio, // 使用优化后的portfolio
+          id: newResumeId,
+          lastUpdated: new Date().toISOString()
+        };
+
+        // 尝试序列化数据
+        const serializedData = JSON.stringify(resumeToSave);
+        if (!serializedData) {
+          throw new Error('数据序列化失败');
+        }
+
+        // 检查数据大小
+        const dataSize = new Blob([serializedData]).size;
+        const maxSize = 5 * 1024 * 1024; // 假设localStorage最大限制为5MB
+        
+        if (dataSize > maxSize) {
+          throw new Error('数据过大，请减少作品数量或图片大小');
+        }
+
+        try {
+          // 尝试保存到localStorage
+          localStorage.setItem('userResumeData', serializedData);
+        } catch (storageError) {
+          // 处理配额超出错误
+          if (storageError.name === 'QuotaExceededError' || 
+              storageError.message.includes('quota') || 
+              storageError.message.includes('exceeded')) {
+            throw new Error('存储空间已满，请清理浏览器缓存或减少作品数量');
+          }
+          throw storageError; // 重新抛出其他错误
+        }
+        
+        // 验证数据是否成功保存
+        const savedData = localStorage.getItem('userResumeData');
+        if (!savedData) {
+          throw new Error('数据保存失败');
+        }
+
+        // 显示成功提示
+        setSaveStatus({
+          show: true,
+          type: 'success',
+          message: '简历保存成功！正在返回个人主页...',
+        });
+        
+        // 2秒后跳转到用户个人主页
+        setTimeout(() => {
+          window.location.href = '/profile';
+        }, 2000);
+
+      } catch (error) {
+        console.error('保存简历时出错:', error);
+        setSaveStatus({
+          show: true,
+          type: 'error',
+          message: `保存失败：${error.message}`,
+        });
+      }
     }, 1000);
   };
   
   // 如果未登录，显示登录页面
-  if (!isLoggedIn) {
-    return <Login onLogin={handleLoginSuccess} />;
-  }
+  // 移除这个条件判断，因为App.jsx中的路由配置已经确保了只有登录用户才能访问ShowYou组件
+  // if (!isLoggedIn) {
+  //   return <Login onLogin={handleLoginSuccess} />;
+  // }
   
   // 如果显示预览，则渲染预览组件
   if (showPreview) {

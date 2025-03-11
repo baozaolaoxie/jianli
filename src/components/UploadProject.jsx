@@ -16,7 +16,8 @@ import {
   CircularProgress,
   Alert,
   Fade,
-  LinearProgress
+  LinearProgress,
+  Divider
 } from '@mui/material';
 import imageCompression from 'browser-image-compression';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,7 +27,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
-const UploadProject = ({ onUploadSuccess }) => {
+const UploadProject = ({ onUploadSuccess, userCategories = [] }) => {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -49,8 +50,14 @@ const UploadProject = ({ onUploadSuccess }) => {
     error: false,
     message: ''
   });
+  
+  // 自定义分类相关状态
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
+  const [customCategories, setCustomCategories] = useState([...userCategories]);
 
-  const categories = [
+  // 默认分类列表
+  const defaultCategories = [
     '视频制作',
     '平面设计',
     '数字营销',
@@ -59,6 +66,34 @@ const UploadProject = ({ onUploadSuccess }) => {
     '品牌策略',
     '其他'
   ];
+
+  // 合并默认分类和用户自定义分类
+  const categories = [...new Set([...defaultCategories, ...customCategories])];
+  
+  // 添加自定义分类
+  const handleAddCustomCategory = () => {
+    if (customCategoryInput.trim() && !categories.includes(customCategoryInput.trim())) {
+      const newCategory = customCategoryInput.trim();
+      setCustomCategories(prev => [...prev, newCategory]);
+      setFormData(prev => ({
+        ...prev,
+        category: newCategory
+      }));
+      setCustomCategoryInput('');
+      setShowCustomCategoryInput(false);
+    }
+  };
+  
+  // 处理自定义分类输入框按键事件
+  const handleCustomCategoryKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddCustomCategory();
+    } else if (e.key === 'Escape') {
+      setShowCustomCategoryInput(false);
+      setCustomCategoryInput('');
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -185,11 +220,31 @@ const UploadProject = ({ onUploadSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.category || !formData.description || !file || !cover) {
+    // 修改验证逻辑，使用filePreview和coverPreview来判断文件是否已上传
+    // 因为这些状态变量在文件上传成功后一定会被设置
+    if (!formData.title || !formData.category || !formData.description) {
       setUploadStatus({
         success: false,
         error: true,
-        message: '请填写所有必填字段并上传作品文件和封面图片'
+        message: '请填写所有必填字段（标题、分类和描述）'
+      });
+      return;
+    }
+    
+    if (!filePreview) {
+      setUploadStatus({
+        success: false,
+        error: true,
+        message: '请上传作品文件'
+      });
+      return;
+    }
+    
+    if (!coverPreview) {
+      setUploadStatus({
+        success: false,
+        error: true,
+        message: '请上传封面图片'
       });
       return;
     }
@@ -223,8 +278,9 @@ const UploadProject = ({ onUploadSuccess }) => {
         file: fileData,                   // 原始文件（完整质量）
         thumbnailFile: thumbnailFileData, // 缩略图文件（低质量，用于预览）
         fileType,
-        image: thumbnailCoverData || coverData, // 优先使用缩略图封面
-        fullImage: coverData,             // 保存原始封面图片
+        image: coverPreview,              // 使用封面图片的URL而不是base64数据
+        thumbnailCoverData: thumbnailCoverData, // 存储缩略图封面的base64数据
+        fullImage: coverData,             // 保存原始封面图片的base64数据
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         status: 'active',
@@ -357,187 +413,16 @@ const UploadProject = ({ onUploadSuccess }) => {
   return (
     <Paper 
       elevation={0} 
-      sx={{ 
-        p: 4,
-        borderRadius: 2,
-        background: 'linear-gradient(135deg, rgba(22,26,31,0.95) 0%, rgba(15,18,21,0.95) 100%)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(201, 164, 125, 0.08)',
-      }}
+      sx={{ p: 4, borderRadius: 2 }}
     >
-      <Typography 
-        variant="h4" 
-        component="h2" 
-        gutterBottom 
-        sx={{ 
-          fontWeight: 600,
-          mb: 4,
-          background: 'linear-gradient(90deg, #C9A47D, #E5D3B3)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}
-      >
+      <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
         上传新作品
       </Typography>
-
-      {uploadStatus.success && (
-        <Fade in={uploadStatus.success}>
-          <Alert 
-            severity="success" 
-            sx={{ mb: 3 }}
-            onClose={() => setUploadStatus({...uploadStatus, success: false})}
-          >
-            {uploadStatus.message}
-          </Alert>
-        </Fade>
-      )}
-
-      {uploadStatus.error && (
-        <Fade in={uploadStatus.error}>
-          <Alert 
-            severity="error" 
-            sx={{ mb: 3 }}
-            onClose={() => setUploadStatus({...uploadStatus, error: false})}
-          >
-            {uploadStatus.message}
-          </Alert>
-        </Fade>
-      )}
-
+      <Divider sx={{ mb: 3 }} />
+      
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
-          {/* 封面上传区域 */}
           <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.light', mb: 2 }}>
-              上传封面图片 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
-            </Typography>
-            {!coverPreview ? (
-              <Box
-                sx={{
-                  border: '2px dashed rgba(201, 164, 125, 0.3)',
-                  borderRadius: 2,
-                  p: 3,
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  bgcolor: 'rgba(201, 164, 125, 0.05)',
-                  '&:hover': {
-                    bgcolor: 'rgba(201, 164, 125, 0.08)',
-                    borderColor: 'rgba(201, 164, 125, 0.5)',
-                  },
-                  mb: 3,
-                  height: '180px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-                onClick={() => document.getElementById('cover-upload').click()}
-              >
-                <input
-                  type="file"
-                  id="cover-upload"
-                  style={{ display: 'none' }}
-                  onChange={handleCoverChange}
-                  accept="image/*"
-                />
-                <ImageIcon sx={{ fontSize: 40, color: 'primary.light', mb: 2 }} />
-                <Typography variant="subtitle1" gutterBottom>
-                  点击上传封面图片
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  仅支持图片文件
-                </Typography>
-              </Box>
-            ) : (
-              <Box sx={{ position: 'relative', mb: 3 }}>
-                <IconButton 
-                  size="small" 
-                  sx={{ 
-                    position: 'absolute', 
-                    top: 8, 
-                    right: 8, 
-                    bgcolor: 'rgba(0,0,0,0.5)',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                    zIndex: 1
-                  }}
-                  onClick={handleClearCover}
-                >
-                  <CloseIcon />
-                </IconButton>
-                <img 
-                  src={coverPreview} 
-                  alt="封面预览" 
-                  style={{ 
-                    width: '100%', 
-                    borderRadius: 8, 
-                    height: '180px', 
-                    objectFit: 'cover' 
-                  }} 
-                />
-              </Box>
-            )}
-          </Grid>
-          
-          {/* 作品文件上传区域 */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: 'primary.light', mb: 2 }}>
-              上传作品文件 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
-            </Typography>
-            {!filePreview ? (
-              <Box
-                sx={{
-                  border: '2px dashed rgba(201, 164, 125, 0.3)',
-                  borderRadius: 2,
-                  p: 4,
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  bgcolor: 'rgba(201, 164, 125, 0.05)',
-                  '&:hover': {
-                    bgcolor: 'rgba(201, 164, 125, 0.08)',
-                    borderColor: 'rgba(201, 164, 125, 0.5)',
-                  },
-                  mb: 3,
-                }}
-                onClick={() => document.getElementById('file-upload').click()}
-              >
-                <input
-                  type="file"
-                  id="file-upload"
-                  style={{ display: 'none' }}
-                  onChange={handleFileChange}
-                  accept="image/*,video/*,application/pdf"
-                />
-                <CloudUploadIcon sx={{ fontSize: 48, color: 'primary.light', mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  点击或拖拽文件到此处上传
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  支持图片、视频和PDF文件
-                </Typography>
-                <Stack direction="row" spacing={2} justifyContent="center" mt={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <ImageIcon sx={{ fontSize: 16, mr: 0.5, color: 'primary.light' }} />
-                    <Typography variant="caption" color="text.secondary">图片</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <VideocamIcon sx={{ fontSize: 16, mr: 0.5, color: 'primary.light' }} />
-                    <Typography variant="caption" color="text.secondary">视频</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <InsertDriveFileIcon sx={{ fontSize: 16, mr: 0.5, color: 'primary.light' }} />
-                    <Typography variant="caption" color="text.secondary">PDF</Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            ) : (
-              renderFilePreview()
-            )}
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="作品标题"
@@ -546,21 +431,11 @@ const UploadProject = ({ onUploadSuccess }) => {
               onChange={handleInputChange}
               required
               variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'rgba(201, 164, 125, 0.2)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(201, 164, 125, 0.4)',
-                  },
-                },
-              }}
             />
           </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
+          
+          <Grid item xs={12}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel id="category-label">作品分类</InputLabel>
               <Select
                 labelId="category-label"
@@ -568,16 +443,50 @@ const UploadProject = ({ onUploadSuccess }) => {
                 value={formData.category}
                 onChange={handleInputChange}
                 label="作品分类"
+                required
               >
                 {categories.map((category) => (
                   <MenuItem key={category} value={category}>
                     {category}
                   </MenuItem>
                 ))}
+                <MenuItem value="custom" onClick={() => setShowCustomCategoryInput(true)}>
+                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
+                  添加自定义分类
+                </MenuItem>
               </Select>
             </FormControl>
+            
+            {showCustomCategoryInput && (
+              <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="自定义分类名称"
+                  value={customCategoryInput}
+                  onChange={(e) => setCustomCategoryInput(e.target.value)}
+                  onKeyDown={handleCustomCategoryKeyDown}
+                  autoFocus
+                  variant="outlined"
+                />
+                <Button 
+                  onClick={handleAddCustomCategory} 
+                  sx={{ ml: 1 }}
+                  variant="contained"
+                >
+                  添加
+                </Button>
+                <IconButton 
+                  onClick={() => setShowCustomCategoryInput(false)}
+                  size="small"
+                  sx={{ ml: 1 }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            )}
           </Grid>
-
+          
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -589,74 +498,144 @@ const UploadProject = ({ onUploadSuccess }) => {
               multiline
               rows={4}
               variant="outlined"
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'rgba(201, 164, 125, 0.2)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: 'rgba(201, 164, 125, 0.4)',
-                  },
-                },
-              }}
             />
           </Grid>
-
+          
           <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom sx={{ color: 'text.secondary', mb: 1 }}>
-              添加标签
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-              <TextField
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleTagInputKeyDown}
-                placeholder="输入标签后按回车添加"
-                size="small"
-                sx={{
-                  flexGrow: 1,
-                  mr: 1,
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: 'rgba(201, 164, 125, 0.2)',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: 'rgba(201, 164, 125, 0.4)',
-                    },
-                  },
-                }}
-              />
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleAddTag}
-                disabled={!tagInput.trim()}
-                startIcon={<AddIcon />}
-              >
-                添加
-              </Button>
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                标签
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <TextField
+                  size="small"
+                  label="添加标签"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagInputKeyDown}
+                  sx={{ mr: 1 }}
+                />
+                <Button 
+                  variant="outlined" 
+                  onClick={handleAddTag}
+                  startIcon={<AddIcon />}
+                  size="medium"
+                >
+                  添加
+                </Button>
+              </Box>
             </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {formData.tags.map((tag, index) => (
+              {formData.tags.map((tag) => (
                 <Chip
-                  key={index}
+                  key={tag}
                   label={tag}
                   onDelete={() => handleDeleteTag(tag)}
-                  sx={{
-                    bgcolor: 'rgba(201, 164, 125, 0.1)',
-                    color: 'primary.light',
-                    '& .MuiChip-deleteIcon': {
-                      color: 'primary.light',
-                      '&:hover': {
-                        color: 'primary.main',
-                      },
-                    },
-                  }}
+                  color="primary"
+                  variant="outlined"
+                  size="small"
                 />
               ))}
             </Box>
           </Grid>
-          <Grid item xs={12}>
+          
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" gutterBottom>
+              上传作品文件
+            </Typography>
+            {!filePreview ? (
+              <Button
+                component="label"
+                variant="outlined"
+                startIcon={<CloudUploadIcon />}
+                sx={{ 
+                  width: '100%', 
+                  height: '120px', 
+                  border: '2px dashed', 
+                  borderColor: 'primary.light',
+                  borderRadius: 2
+                }}
+              >
+                选择文件
+                <input
+                  type="file"
+                  hidden
+                  onChange={handleFileChange}
+                  accept="image/*,video/*,application/pdf"
+                />
+              </Button>
+            ) : renderFilePreview()}
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Typography variant="subtitle1" gutterBottom>
+              上传封面图片
+            </Typography>
+            {!coverPreview ? (
+              <Button
+                component="label"
+                variant="outlined"
+                startIcon={<ImageIcon />}
+                sx={{ 
+                  width: '100%', 
+                  height: '120px', 
+                  border: '2px dashed', 
+                  borderColor: 'primary.light',
+                  borderRadius: 2
+                }}
+              >
+                选择封面图片
+                <input
+                  type="file"
+                  hidden
+                  onChange={handleCoverChange}
+                  accept="image/*"
+                />
+              </Button>
+            ) : (
+              <Box sx={{ position: 'relative', mb: 3 }}>
+                <IconButton 
+                  size="small" 
+                  sx={{ 
+                    position: 'absolute', 
+                    top: 8, 
+                    right: 8, 
+                    bgcolor: 'rgba(0,0,0,0.5)',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
+                  }}
+                  onClick={handleClearCover}
+                >
+                  <CloseIcon />
+                </IconButton>
+                <img 
+                  src={coverPreview} 
+                  alt="封面预览" 
+                  style={{ 
+                    width: '100%', 
+                    borderRadius: 8, 
+                    maxHeight: '300px', 
+                    objectFit: 'cover' 
+                  }} 
+                />
+              </Box>
+            )}
+          </Grid>
+          
+          {(uploadStatus.success || uploadStatus.error) && (
+            <Grid item xs={12}>
+              <Fade in={true}>
+                <Alert 
+                  severity={uploadStatus.success ? "success" : "error"}
+                  onClose={() => setUploadStatus({ success: false, error: false, message: '' })}
+                >
+                  {uploadStatus.message}
+                </Alert>
+              </Fade>
+            </Grid>
+          )}
+          
+          <Grid item xs={12} sx={{ mt: 2 }}>
             <Button
               type="submit"
               variant="contained"
@@ -664,11 +643,8 @@ const UploadProject = ({ onUploadSuccess }) => {
               size="large"
               fullWidth
               disabled={isUploading}
-              sx={{
-                py: 1.5,
-                fontSize: '1.1rem',
-                position: 'relative',
-              }}
+              startIcon={isUploading ? null : <CloudUploadIcon />}
+              sx={{ position: 'relative', py: 1.5 }}
             >
               {isUploading ? (
                 <>

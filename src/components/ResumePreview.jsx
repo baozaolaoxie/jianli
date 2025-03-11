@@ -1,29 +1,71 @@
-import React, { useState } from 'react';
-import { Container, Typography, Box, Grid, Paper, Divider, List, ListItem, ListItemIcon, ListItemText, Chip } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import ChatIcon from '@mui/icons-material/Chat';
-import TwitterIcon from '@mui/icons-material/Twitter';
+// 导入React核心库和钩子函数
+import React, { useState, useEffect } from 'react';
+// 导入Material UI组件
+import { Container, Typography, Box, Grid, Paper, Divider, List, ListItem, ListItemIcon, ListItemText, Chip, Tabs, Tab } from '@mui/material';
+// 导入Material UI图标
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // 勾选图标
+import EmailIcon from '@mui/icons-material/Email'; // 邮件图标
+import PhoneIcon from '@mui/icons-material/Phone'; // 电话图标
+import LocationOnIcon from '@mui/icons-material/LocationOn'; // 位置图标
+import ChatIcon from '@mui/icons-material/Chat'; // 聊天图标
+import TwitterIcon from '@mui/icons-material/Twitter'; // 推特图标
+// 导入项目详情对话框组件
 import ProjectDetailDialog from './ProjectDetailDialog';
 
+// 简历预览组件，接收简历数据作为属性
 const ResumePreview = ({ resumeData }) => {
+  // 从简历数据中解构出各部分信息
   const { about, portfolio, skills, contact } = resumeData;
   
   // 作品详情预览状态
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [openDetailDialog, setOpenDetailDialog] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null); // 当前选中的项目
+  const [openDetailDialog, setOpenDetailDialog] = useState(false); // 详情对话框显示状态
+  
+  // 分类相关状态
+  const [currentCategory, setCurrentCategory] = useState('全部'); // 当前选中的分类
+  const [filteredPortfolio, setFilteredPortfolio] = useState([]); // 筛选后的作品集
+  const [categories, setCategories] = useState(['全部']); // 所有分类列表
   
   // 处理作品点击预览
   const handleProjectClick = (project) => {
+    // 设置当前选中的项目
     setSelectedProject(project);
+    // 打开详情对话框
     setOpenDetailDialog(true);
   };
   
   // 处理详情对话框关闭
   const handleCloseDetailDialog = () => {
+    // 关闭详情对话框
     setOpenDetailDialog(false);
+  };
+  
+  // 处理分类切换
+  const handleCategoryChange = (event, newCategory) => {
+    setCurrentCategory(newCategory);
+  };
+  
+  // 初始化分类列表和筛选作品
+  useEffect(() => {
+    if (portfolio && portfolio.length > 0) {
+      // 提取所有作品的分类，并去重
+      const uniqueCategories = ['全部', ...new Set(portfolio.map(project => project.category).filter(Boolean))];
+      setCategories(uniqueCategories);
+      
+      // 根据当前选中的分类筛选作品
+      filterPortfolioByCategory(currentCategory);
+    } else {
+      setFilteredPortfolio([]);
+    }
+  }, [portfolio, currentCategory]);
+  
+  // 根据分类筛选作品
+  const filterPortfolioByCategory = (category) => {
+    if (category === '全部') {
+      setFilteredPortfolio(portfolio);
+    } else {
+      setFilteredPortfolio(portfolio.filter(project => project.category === category));
+    }
   };
 
   return (
@@ -89,8 +131,51 @@ const ResumePreview = ({ resumeData }) => {
           作品集
         </Typography>
         <Divider sx={{ mb: 3 }} />
-        <Grid container spacing={3}>
-          {portfolio.map((project, index) => (
+        
+        {/* 分类标签栏 */}
+        <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={currentCategory}
+            onChange={handleCategoryChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{
+              '& .MuiTab-root': {
+                color: 'text.secondary',
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                  fontWeight: 600,
+                },
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: 'primary.main',
+              },
+            }}
+          >
+            {categories.map((category, index) => (
+              <Tab 
+                key={index} 
+                label={category} 
+                value={category}
+                sx={{ 
+                  textTransform: 'none',
+                  minWidth: 'auto',
+                  px: 2,
+                  transition: 'all 0.3s ease',
+                }}
+              />
+            ))}
+          </Tabs>
+        </Box>
+        
+        <Grid container spacing={3} sx={{ 
+          minHeight: '200px',
+          '& .MuiGrid-item': {
+            transition: 'all 0.5s ease-in-out',
+          }
+        }}>
+          {filteredPortfolio.map((project, index) => (
             <Grid item key={index} xs={12} sm={6} md={4}>
               <Paper
                 elevation={0}
@@ -298,6 +383,14 @@ const ResumePreview = ({ resumeData }) => {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <TwitterIcon sx={{ color: 'primary.main', mr: 2 }} />
                     <Typography>微博: {contact.social.weibo}</Typography>
+                  </Box>
+                </Grid>
+              )}
+              {contact.social.xiaohongshu && (
+                <Grid item xs={12} sm={6} md={4}>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <ChatIcon sx={{ color: 'primary.main', mr: 2 }} />
+                    <Typography>小红书: {contact.social.xiaohongshu}</Typography>
                   </Box>
                 </Grid>
               )}

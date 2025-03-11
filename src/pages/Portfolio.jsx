@@ -241,7 +241,7 @@ const Portfolio = () => {
                     <CardMedia
                       component="img"
                       height="220"
-                      image={project.image}
+                      image={project.image || (project.thumbnailCoverData || project.fullImage)}
                       alt={project.title}
                       sx={{
                         transition: 'transform 0.6s ease',

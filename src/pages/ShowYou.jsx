@@ -47,6 +47,7 @@ const ShowYou = () => {
     },
     portfolio: [],
     skills: [],
+    categories: [], // 添加自定义分类数组
     contact: {
       email: '',
       phone: '',
@@ -54,6 +55,7 @@ const ShowYou = () => {
       social: {
         weixin: '',
         weibo: '',
+        xiaohongshu: '', // 添加小红书字段
       },
     },
   });
@@ -61,6 +63,9 @@ const ShowYou = () => {
   // 新技能输入
   const [newSkill, setNewSkill] = useState('');
   const [newSkillLevel, setNewSkillLevel] = useState('');
+  
+  // 新分类输入
+  const [newCategory, setNewCategory] = useState('');
   
   // 保存状态提示
   const [saveStatus, setSaveStatus] = useState({
@@ -77,15 +82,15 @@ const ShowYou = () => {
     // 这里使用模拟数据
     setResumeData({
       about: {
-        name: '暴躁老谢',
-        title: '创意导演',
-        bio: '10年广告创意经验，专注于品牌故事讲述和视觉设计。',
-        experience: '曾服务于多家国际知名品牌，包括可口可乐、耐克、宝马等。',
+        name: 'WHO ARE YOU?',
+        title: '您的职位',
+        bio: '在这里简要介绍您的专业背景和擅长领域。',
+        experience: '在这里列出您的主要工作经历和项目经验。',
       },
       portfolio: [
         {
           id: 1,
-          title: '可口可乐品牌宣传片',
+          title: '可口可乐品牌故事',
           category: '视频制作',
           description: '为可口可乐打造的夏季主题宣传片，通过鲜明的视觉语言和情感故事讲述品牌理念。',
           image: '/images/portfolio-1.jpg',
@@ -98,13 +103,15 @@ const ShowYou = () => {
         { name: 'Adobe After Effects', level: '熟练' },
         { name: '品牌策略', level: '精通' },
       ],
+      categories: ['视频制作', '平面设计', '数字营销', '品牌策略'], // 添加默认分类
       contact: {
         email: 'contact@example.com',
-        phone: '+86 138 8888 8888',
+        phone: '+86 1XX XXXX XXXX',
         location: '上海市浦东新区陆家嘴金融贸易区',
         social: {
           weixin: 'wxid_example',
-          weibo: '@暴躁老谢',
+          weibo: '@',
+          xiaohongshu: '@', // 添加小红书默认值
         },
       },
     });
@@ -160,11 +167,74 @@ const ShowYou = () => {
     }));
   };
   
-  // 处理作品上传成功
-  const handleUploadSuccess = (newProject) => {
+  // 删除作品
+  const handleDeleteProject = (projectId) => {
+    // 检查projectId是否存在
+    if (projectId === undefined || projectId === null) {
+      console.error('删除作品失败：无效的项目ID');
+      return;
+    }
+    
+    // 检查是否能找到对应的项目
+    const projectExists = resumeData.portfolio.some(project => 
+      (typeof projectId === 'number' && project.id === projectId) || 
+      (typeof projectId === 'string' && project.id.toString() === projectId.toString())
+    );
+    
+    if (!projectExists) {
+      console.error(`删除作品失败：找不到ID为${projectId}的项目`);
+      return;
+    }
+    
+    // 执行删除操作
     setResumeData(prev => ({
       ...prev,
-      portfolio: [...prev.portfolio, newProject],
+      portfolio: prev.portfolio.filter(project => {
+        // 处理不同类型的ID比较
+        if (typeof project.id === 'number' && typeof projectId === 'number') {
+          return project.id !== projectId;
+        }
+        // 转换为字符串进行比较，确保类型不匹配时也能正确比较
+        return project.id.toString() !== projectId.toString();
+      }),
+    }));
+    
+    // 显示成功提示
+    setSaveStatus({
+      show: true,
+      type: 'success',
+      message: '作品已删除！',
+    });
+    
+    // 3秒后隐藏提示
+    setTimeout(() => {
+      setSaveStatus(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+  
+  // 处理作品上传成功
+  const handleUploadSuccess = (newProject) => {
+    // 优化作品数据，减少存储大小
+    const optimizedProject = {
+      ...newProject,
+      // 确保必要的字段都有默认值
+      id: newProject.id || Date.now(),
+      title: newProject.title || '未命名作品',
+      category: newProject.category || '未分类',
+      description: newProject.description || '',
+      tags: Array.isArray(newProject.tags) ? [...newProject.tags] : [],
+      fileType: newProject.fileType || 'image',
+      hasFullContent: true,
+      // 处理文件数据
+      file: newProject.thumbnailFile || null, // 使用缩略图作为主要显示
+      fullContentFile: newProject.file || null, // 原始文件作为完整内容
+      image: newProject.thumbnailCoverData || newProject.coverData || null,
+      fullContentImage: newProject.coverData || null
+    };
+
+    setResumeData(prev => ({
+      ...prev,
+      portfolio: [optimizedProject, ...prev.portfolio],
     }));
     
     // 显示成功提示
@@ -189,13 +259,59 @@ const ShowYou = () => {
   
   // 处理作品点击预览
   const handleProjectClick = (project) => {
-    setSelectedProject(project);
-    setOpenDetailDialog(true);
+    if (!project) {
+      console.error('项目数据为空，无法预览');
+      return;
+    }
+    try {
+      // 确保project是一个有效的对象，并提供默认值防止属性访问错误
+      const safeProject = {
+        id: project.id || Date.now(),
+        title: project.title || '未命名作品',
+        category: project.category || '未分类',
+        description: project.description || '',
+        image: project.image || null,
+        thumbnailFile: project.thumbnailFile || null,
+        file: project.file || null,
+        fileType: project.fileType || 'image',
+        tags: Array.isArray(project.tags) ? [...project.tags] : [],
+        hasFullContent: project.hasFullContent || false,
+        fullContentFile: project.fullContentFile || null,
+        fullContentImage: project.fullContentImage || null
+      };
+      // 设置选中的项目
+      setSelectedProject(safeProject);
+      // 打开详情对话框
+      setOpenDetailDialog(true);
+    } catch (error) {
+      console.error('打开项目详情时出错:', error);
+      // 即使出错也尝试打开对话框，但使用最小化的安全对象
+      setSelectedProject({
+        title: '作品详情',
+        description: '无法加载完整作品信息',
+        fileType: 'image'
+      });
+      setOpenDetailDialog(true);
+    }
   };
   
   // 处理详情对话框关闭
   const handleCloseDetailDialog = () => {
     setOpenDetailDialog(false);
+    // 延迟清除选中的项目，避免UI闪烁
+    setTimeout(() => {
+      setSelectedProject(null);
+    }, 300);
+  };
+  
+  // 错误处理函数 - 用于捕获和处理渲染错误
+  const handleRenderError = (error, info) => {
+    console.error('渲染错误:', error, info);
+    setSaveStatus({
+      show: true,
+      type: 'error',
+      message: '页面渲染出错，请刷新页面或联系支持团队'
+    });
   };
 
   // 处理分享对话框关闭
@@ -565,103 +681,125 @@ const ShowYou = () => {
               <Typography variant="h6" gutterBottom>
                 上传新作品
               </Typography>
-              <UploadProject onUploadSuccess={handleUploadSuccess} />
+              <UploadProject onUploadSuccess={handleUploadSuccess} userCategories={resumeData.categories || []} />
             </Paper>
             
             {/* 现有作品列表 */}
             <Typography variant="h6" gutterBottom sx={{ mt: 4, mb: 2 }}>
-              现有作品 ({resumeData.portfolio.length})
+              现有作品 ({resumeData.portfolio ? resumeData.portfolio.length : 0})
             </Typography>
             
             <Grid container spacing={3}>
-              {resumeData.portfolio.map((project, index) => (
-                <Grid item xs={12} sm={6} md={4} key={project.id || index}>
-                  <Paper
-                    elevation={0}
-                    onClick={() => handleProjectClick(project)}
-                    sx={{
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      position: 'relative',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-5px)',
-                        boxShadow: '0 10px 30px rgba(201, 164, 125, 0.15)'
-                      }
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        height: 180,
-                        backgroundImage: `url(${project.image})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        position: 'relative',
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          background: 'rgba(0,0,0,0.2)',
-                          opacity: 0,
-                          transition: 'opacity 0.3s ease',
-                        },
-                        '&:hover::after': {
-                          opacity: 1
-                        }
-                      }}
-                    />
-                    <Box sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {project.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {project.category}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {project.description}
-                      </Typography>
-                      <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {project.tags && project.tags.map((tag, tagIndex) => (
-                          <Chip 
-                            key={tagIndex} 
-                            label={tag} 
-                            size="small" 
-                            sx={{ 
-                              bgcolor: 'rgba(201, 164, 125, 0.1)',
-                              color: 'primary.light',
-                              borderRadius: 1,
-                            }} 
-                          />
-                        ))}
-                      </Box>
-                      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                        <IconButton 
-                          size="small" 
-                          color="primary"
-                          onClick={(e) => {
-                            e.stopPropagation(); // 阻止事件冒泡
+              {Array.isArray(resumeData.portfolio) && resumeData.portfolio.length > 0 ? (
+                resumeData.portfolio.map((project, index) => {
+                  // 确保project是有效对象
+                  if (!project) return null;
+                  
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={project.id || `project-${index}`}>
+                      <Paper
+                        elevation={0}
+                        onClick={() => handleProjectClick(project)}
+                        sx={{
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-5px)',
+                            boxShadow: '0 10px 30px rgba(201, 164, 125, 0.15)'
+                          }
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            height: 180,
+                            backgroundImage: `url(${project.image || '/images/portfolio-1.jpg'})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            position: 'relative',
+                            '&::after': {
+                              content: '""',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              background: 'rgba(0,0,0,0.2)',
+                              opacity: 0,
+                              transition: 'opacity 0.3s ease',
+                            },
+                            '&:hover::after': {
+                              opacity: 1
+                            }
                           }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={(e) => {
-                            e.stopPropagation(); // 阻止事件冒泡
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                  </Paper>
+                        />
+                        <Box sx={{ p: 2 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            {project.title || '未命名作品'}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            {project.category || '未分类'}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {project.description || '无描述'}
+                          </Typography>
+                          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {Array.isArray(project.tags) && project.tags.map((tag, tagIndex) => (
+                              <Chip 
+                                key={tagIndex} 
+                                label={tag} 
+                                size="small" 
+                                sx={{ 
+                                  bgcolor: 'rgba(201, 164, 125, 0.1)',
+                                  color: 'primary.light',
+                                  borderRadius: 1,
+                                }} 
+                              />
+                            ))}
+                          </Box>
+                          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                            <IconButton 
+                              size="small" 
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation(); // 阻止事件冒泡
+                                // 暂时不实现编辑功能，只阻止事件冒泡防止页面空白
+                                console.log('编辑功能暂未实现', project.title);
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation(); // 阻止事件冒泡
+                                // 确保project.id存在，如果不存在则使用索引作为备选
+                                handleDeleteProject(project.id || index);
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  );
+                })
+              ) : (
+                <Grid item xs={12}>
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 6,
+                    bgcolor: 'rgba(0,0,0,0.1)',
+                    borderRadius: 2 
+                  }}>
+                    <Typography color="text.secondary">暂无作品，请点击"上传新作品"添加</Typography>
+                  </Box>
                 </Grid>
-              ))}
+              )}            
             </Grid>
           </Box>
         )}
@@ -881,6 +1019,25 @@ const ShowYou = () => {
                   }}
                 />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="小红书"
+                  value={resumeData.contact.social.xiaohongshu}
+                  onChange={(e) => handleNestedInputChange('contact', 'social', 'xiaohongshu', e.target.value)}
+                  sx={{
+                    mb: 3,
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: 'rgba(201, 164, 125, 0.2)',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'rgba(201, 164, 125, 0.4)',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
             </Grid>
           </Box>
         )}
@@ -928,11 +1085,13 @@ const ShowYou = () => {
       </Box>
       
       {/* 作品详情对话框 */}
-      <ProjectDetailDialog 
-        open={openDetailDialog}
-        onClose={handleCloseDetailDialog}
-        project={selectedProject}
-      />
+      {selectedProject && (
+        <ProjectDetailDialog 
+          open={openDetailDialog}
+          onClose={handleCloseDetailDialog}
+          project={selectedProject}
+        />
+      )}
     </Container>
   );
 };

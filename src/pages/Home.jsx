@@ -216,7 +216,7 @@ const Home = () => {
               </Typography>
               <Divider sx={{ width: '30%', mb: 3, borderColor: 'rgba(58,123,213,0.3)' }} />
               <Typography sx={{ color: '#546e7a', lineHeight: 1.7 }}>
-                专为广告行业人士设计的简历模板，突出您的创意能力和专业技能，让您在求职中脱颖而出。
+                专为自由职业者打造的简历模板，突出您的项目经验和专业技能，帮助您吸引更多优质客户和项目机会。
               </Typography>
             </Paper>
           </Grid>
@@ -258,7 +258,7 @@ const Home = () => {
               </Typography>
               <Divider sx={{ width: '30%', mb: 3, borderColor: 'rgba(0,210,255,0.3)' }} />
               <Typography sx={{ color: '#546e7a', lineHeight: 1.7 }}>
-                上传并展示您的最佳作品，支持多种媒体格式，让招聘者直观了解您的创意实力和专业水平。
+                上传并展示您的最佳作品，支持多种媒体格式，让潜在合作伙伴直观了解您的创意实力和专业水平。
               </Typography>
             </Paper>
           </Grid>
@@ -353,7 +353,7 @@ const Home = () => {
                       {item === 3 && '专业技能展示'}
                     </Typography>
                     <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                      {item === 1 && '打造专属于您的广告人简历'}
+                      {item === 1 && '打造专属于您的个性简历'}
                       {item === 2 && '轻松管理和展示您的创意作品'}
                       {item === 3 && '突出您的专业技能和软件掌握程度'}
                     </Typography>
@@ -434,7 +434,7 @@ const Home = () => {
             mx: 'auto',
           }}
         >
-          只需简单几步，您就能创建一份专业的广告行业简历，展示您的才华和技能。
+          只需简单几步，您就能创建一份专业的个性化简历，展示您的才华和技能。
         </Typography>
         <Box sx={{ textAlign: 'center' }}>
           <Button

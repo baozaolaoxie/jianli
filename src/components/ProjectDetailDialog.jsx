@@ -43,7 +43,8 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
     title: project.title || '未命名作品',
     category: project.category || '未分类',
     description: project.description || '',
-    image: project.image || null,
+    // 修复图片URL处理逻辑，按优先级使用可用的图片URL
+    image: project.image || project.thumbnailCoverUrl || project.imageUrl || project.fullImage || null,
     thumbnailFile: project.thumbnailFile || null,
     file: project.file || null,
     // 根据文件类型判断fileType，如果未指定则根据文件扩展名推断
@@ -59,13 +60,14 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
     tags: Array.isArray(project.tags) ? [...project.tags] : [],
     hasFullContent: project.hasFullContent || false,
     fullContentFile: project.fullContentFile || null,
-    fullContentImage: project.fullContentImage || null
+    // 修复高清图片URL处理逻辑
+    fullContentImage: project.fullImage || project.fullContentImage || null
   };
 
   // 加载完整内容的函数
   const loadFullContent = () => {
     // 只有当项目有完整内容且尚未加载时才执行
-    if (project.hasFullContent && !fullContent) {
+    if (safeProject.hasFullContent && !fullContent) {
       // 设置加载状态为true，显示加载指示器
       setIsLoading(true);
       // 模拟网络延迟，实际应用中可能是从服务器加载
@@ -74,12 +76,12 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
         // 1. 优先从fullContentFile加载（针对优化存储的情况）
         // 2. 其次从file属性加载（针对未优化存储的情况）
         // 3. 最后从fullContentImage加载（针对封面图片）
-        if (project.fullContentFile) {
-          setFullContent(project.fullContentFile);
-        } else if (project.file) {
-          setFullContent(project.file);
-        } else if (project.fullContentImage) {
-          setFullContent(project.fullContentImage);
+        if (safeProject.fullContentFile) {
+          setFullContent(safeProject.fullContentFile);
+        } else if (safeProject.file) {
+          setFullContent(safeProject.file);
+        } else if (safeProject.fullContentImage) {
+          setFullContent(safeProject.fullContentImage);
         }
         // 加载完成后，设置加载状态为false
         setIsLoading(false);
@@ -105,7 +107,7 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
     }
 
     // 确定要显示的内容：按优先级选择显示内容
-    const contentToShow = fullContent || safeProject.thumbnailFile || safeProject.file || safeProject.image;
+    const contentToShow = fullContent || safeProject.image || safeProject.thumbnailFile || safeProject.file;
     
     // 根据文件类型渲染对应的内容
     const fileType = safeProject.fileType;
@@ -198,133 +200,115 @@ const ProjectDetailDialog = ({ open, onClose, project }) => {
           </video>
         </Box>
       );
-    }
-    // 其他文件类型显示默认图标
-    return (
-      <Box sx={{ 
-        textAlign: 'center',
-        py: 4,
-        bgcolor: 'rgba(0,0,0,0.2)',
-        borderRadius: 2,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 2
-      }}>
-        <InsertDriveFileIcon sx={{ fontSize: 48, color: 'primary.main' }} />
-        <Typography color="text.secondary">{safeProject.title}</Typography>
-      </Box>
-    );
-  };
-
-  // 渲染文件类型图标
-  const renderFileTypeIcon = () => {
-    try {
-      // 如果没有fileType属性，默认使用图片图标
-      if (!project.fileType) {
-        return <ImageIcon sx={{ mr: 1, color: 'primary.light' }} />;
-      }
-      
-      // 根据文件类型渲染对应的内容
-    const fileType = safeProject.fileType;
-    if (fileType === 'image') {
-        return <ImageIcon sx={{ mr: 1, color: 'primary.light' }} />;
-      } else if (fileType === 'video') {
-        return <VideocamIcon sx={{ mr: 1, color: 'primary.light' }} />;
-      } else {
-        return <InsertDriveFileIcon sx={{ mr: 1, color: 'primary.light' }} />;
-      }
-    } catch (error) {
-      console.error('渲染文件类型图标时出错:', error);
-      // 出错时返回默认图标
-      return <ImageIcon sx={{ mr: 1, color: 'primary.light' }} />;
+    } else {
+      // 对于其他类型的文件，显示文件图标和名称
+      return (
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 4, 
+            mb: 3, 
+            borderRadius: 2, 
+            bgcolor: 'rgba(0,0,0,0.2)' 
+          }}
+        >
+          <InsertDriveFileIcon sx={{ fontSize: 60, color: 'primary.light', mb: 2 }} />
+          <Typography variant="body1" gutterBottom>
+            {safeProject.title}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            点击下载查看完整文件
+          </Typography>
+        </Box>
+      );
     }
   };
-
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="md"
       fullWidth
+      scroll="paper"
       PaperProps={{
         sx: {
           bgcolor: 'background.paper',
-          backgroundImage: 'linear-gradient(135deg, rgba(22,26,31,0.98) 0%, rgba(15,18,21,0.98) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(201, 164, 125, 0.08)',
-          borderRadius: 2,
+          backgroundImage: 'none',
+          borderRadius: 3,
           overflow: 'hidden',
-          maxHeight: '90vh'
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
         }
       }}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(201, 164, 125, 0.1)',
-        pb: 2
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {renderFileTypeIcon()}
-          <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
-            {project.title}
-          </Typography>
+      <DialogTitle sx={{ p: 3, pb: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="overline" color="primary.light" gutterBottom sx={{ display: 'block' }}>
+              {safeProject.category}
+            </Typography>
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 700, mb: 1 }}>
+              {safeProject.title}
+            </Typography>
+          </Box>
+          <IconButton
+            edge="end"
+            color="inherit"
+            onClick={onClose}
+            aria-label="close"
+            sx={{ mt: -1, mr: -1 }}
+          >
+            <CloseIcon />
+          </IconButton>
         </Box>
-        <IconButton
-          edge="end"
-          color="inherit"
-          onClick={onClose}
-          aria-label="close"
-        >
-          <CloseIcon />
-        </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ pt: 3 }}>
+      
+      <DialogContent sx={{ p: 3, pt: 1 }}>
+        {/* 项目内容预览 */}
         {renderContent()}
         
-        <Paper elevation={0} sx={{ 
-          p: 3, 
-          borderRadius: 2,
-          background: 'linear-gradient(135deg, rgba(22,26,31,0.7) 0%, rgba(15,18,21,0.7) 100%)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(201, 164, 125, 0.08)',
-        }}>
-          <Typography variant="overline" color="primary.light" gutterBottom sx={{ display: 'block' }}>
-            {project.category}
-          </Typography>
-          
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+        {/* 项目描述 */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 3, 
+            mb: 3, 
+            borderRadius: 2,
+            bgcolor: 'rgba(201, 164, 125, 0.05)'
+          }}
+        >
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
             项目描述
           </Typography>
-          
-          <Typography paragraph color="text.secondary" sx={{ lineHeight: 1.7 }}>
-            {project.description}
+          <Typography variant="body1" paragraph>
+            {safeProject.description}
           </Typography>
-          
-          <Divider sx={{ my: 2, borderColor: 'rgba(201, 164, 125, 0.1)' }} />
-          
-          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
-            标签
-          </Typography>
-          
-          <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-            {project.tags && project.tags.map((tag, index) => (
-              <Chip 
-                key={index} 
-                label={tag} 
-                size="small" 
-                sx={{
-                  bgcolor: 'rgba(201, 164, 125, 0.1)',
-                  color: 'primary.light',
-                  borderRadius: 1,
-                }} 
-              />
-            ))}
-          </Stack>
         </Paper>
+        
+        {/* 标签 */}
+        {safeProject.tags && safeProject.tags.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              标签
+            </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+              {safeProject.tags.map((tag, index) => (
+                <Chip 
+                  key={index} 
+                  label={tag} 
+                  sx={{
+                    bgcolor: 'rgba(201, 164, 125, 0.1)',
+                    color: 'primary.light',
+                    borderRadius: 1,
+                  }} 
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
       </DialogContent>
     </Dialog>
   );

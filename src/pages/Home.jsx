@@ -302,7 +302,7 @@ const Home = () => {
                   elevation={0}
                   sx={{
                     height: 280,
-                    backgroundImage: `url("/images/portfolio-${item}.jpg")`,
+                    backgroundImage: `url("/images/feature-${item}.jpg")`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     position: 'relative',

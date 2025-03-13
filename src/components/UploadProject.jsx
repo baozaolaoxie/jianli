@@ -253,39 +253,107 @@ const UploadProject = ({ onUploadSuccess, userCategories = [] }) => {
     setUploadStatus({ success: false, error: false, message: '' });
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 检查用户是否已登录
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('未登录状态，请先登录后再上传作品');
+      }
+
+      // 导入存储工具
+      const { uploadFile, uploadImage } = await import('../utils/storage.js');
       
-      // 将文件转换为base64
-      const fileToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = error => reject(error);
+      // 上传原始文件
+      let fileUrl = null;
+      let thumbnailFileUrl = null;
+      let coverUrl = null;
+      let thumbnailCoverUrl = null;
+      
+      // 设置上传进度提示
+      setUploadStatus({
+        success: false,
+        error: false,
+        message: '正在上传文件，请稍候...'
+      });
+      
+      // 上传原始文件
+      if (file) {
+        setUploadStatus({
+          success: false,
+          error: false,
+          message: '正在上传作品文件...'
         });
-      };
+        const fileResult = await uploadFile(file, `projects/${formData.category}`);
+        if (!fileResult.success) {
+          throw new Error(`作品文件上传失败: ${fileResult.error}`);
+        }
+        fileUrl = fileResult.url;
+        console.log('文件上传成功，URL:', fileUrl); // 添加日志以便调试
+      }
       
-      // 转换作品文件和封面图片
-      // 使用缩略图作为预览，原始文件作为完整内容
-      const fileData = file ? await fileToBase64(file) : null;
-      const thumbnailFileData = thumbnailFile ? await fileToBase64(thumbnailFile) : null;
-      const coverData = cover ? await fileToBase64(cover) : null;
-      const thumbnailCoverData = thumbnailCover ? await fileToBase64(thumbnailCover) : null;
+      // 上传缩略图文件（如果存在）
+      if (thumbnailFile) {
+        setUploadStatus({
+          success: false,
+          error: false,
+          message: '正在上传作品缩略图...'
+        });
+        const thumbnailResult = await uploadImage(thumbnailFile, `projects/${formData.category}/thumbnails`);
+        if (!thumbnailResult.success) {
+          throw new Error(`缩略图上传失败: ${thumbnailResult.error}`);
+        }
+        thumbnailFileUrl = thumbnailResult.url;
+      }
+      
+      // 上传封面图片
+      if (cover) {
+        setUploadStatus({
+          success: false,
+          error: false,
+          message: '正在上传封面图片...'
+        });
+        const coverResult = await uploadImage(cover, `projects/${formData.category}/covers`);
+        if (!coverResult.success) {
+          throw new Error(`封面上传失败: ${coverResult.error}`);
+        }
+        coverUrl = coverResult.url;
+      }
+      
+      // 上传缩略图封面（如果存在）
+      if (thumbnailCover) {
+        setUploadStatus({
+          success: false,
+          error: false,
+          message: '正在上传封面缩略图...'
+        });
+        const thumbnailCoverResult = await uploadImage(thumbnailCover, `projects/${formData.category}/covers/thumbnails`);
+        if (!thumbnailCoverResult.success) {
+          throw new Error(`缩略图封面上传失败: ${thumbnailCoverResult.error}`);
+        }
+        thumbnailCoverUrl = thumbnailCoverResult.url;
+      }
+      
+      // 确保缩略图封面URL存在，如果不存在则使用原始封面URL
+      const finalThumbnailCoverUrl = thumbnailCoverUrl || coverUrl;
       
       const newProject = {
         id: Date.now(),
         ...formData,
-        file: fileData,                   // 原始文件（完整质量）
-        thumbnailFile: thumbnailFileData, // 缩略图文件（低质量，用于预览）
+        fileUrl,                      // 原始文件URL（完整质量）
+        thumbnailFileUrl,             // 缩略图文件URL（低质量，用于预览）
         fileType,
-        image: coverPreview,              // 使用封面图片的URL而不是base64数据
-        thumbnailCoverData: thumbnailCoverData, // 存储缩略图封面的base64数据
-        fullImage: coverData,             // 保存原始封面图片的base64数据
+        // 修复关键问题：确保设置image属性，这是Portfolio组件期望的属性名
+        image: finalThumbnailCoverUrl, // 设置image属性为封面URL
+        imageUrl: finalThumbnailCoverUrl, // 使用优化后的缩略图封面URL作为主图片显示
+        thumbnailCoverUrl: finalThumbnailCoverUrl, // 存储缩略图封面的URL
+        fullImage: coverUrl,       // 保存原始封面图片的URL
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         status: 'active',
-        hasFullContent: true              // 标记有完整内容可加载
+        hasFullContent: true          // 标记有完整内容可加载
       };
+      
+      // 添加调试日志
+      console.log('准备传递给Portfolio组件的项目数据:', newProject);
       
       if (onUploadSuccess) {
         onUploadSuccess(newProject);
@@ -304,7 +372,7 @@ const UploadProject = ({ onUploadSuccess, userCategories = [] }) => {
       setUploadStatus({
         success: false,
         error: true,
-        message: '上传失败，请稍后重试'
+        message: `上传失败: ${error.message || '请稍后重试'}`
       });
     } finally {
       setIsUploading(false);

@@ -1,7 +1,6 @@
 // Firebase配置文件
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
 
 // Firebase配置
@@ -18,7 +17,6 @@ const firebaseConfig = {
 // 初始化Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const storage = getStorage(app);
 const analytics = getAnalytics(app);
 
 // 认证相关函数
@@ -49,17 +47,7 @@ export const logoutUser = async () => {
   }
 };
 
-// 存储相关函数
-export const uploadFile = async (file, path) => {
-  try {
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return { success: true, url: downloadURL };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-};
+// 不再提供存储相关函数，已迁移到阿里云OSS
 
 // 导出Firebase实例
-export { app, auth, storage, analytics };
+export { app, auth, analytics };

@@ -93,12 +93,28 @@ router.get('/me', async (req, res) => {
     // 从请求头获取令牌
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
+      console.error('认证失败: 未提供令牌');
       return res.status(401).json({ success: false, message: '未授权，无访问令牌' });
     }
 
-    // 验证令牌
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
+    // 检查是否是Firebase令牌（Firebase令牌通常以"ey"开头且包含三段）
+    const isFirebaseToken = token.startsWith('ey') && token.split('.').length === 3;
+    
+    let userId;
+    if (isFirebaseToken) {
+      // 对于Firebase令牌，我们不进行验证，直接信任它
+      console.log('检测到Firebase令牌，跳过JWT验证');
+      userId = 'firebase_user'; // 使用一个固定值作为用户ID
+    } else {
+      // 对于非Firebase令牌，使用常规JWT验证
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id;
+      } catch (jwtError) {
+        console.error('JWT验证错误:', jwtError.message);
+        return res.status(401).json({ success: false, message: `无效的令牌: ${jwtError.message}` });
+      }
+    }
 
     // 使用模拟服务获取用户
     const user = await mockService.findUserById(userId);

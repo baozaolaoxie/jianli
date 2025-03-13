@@ -41,6 +41,7 @@ const UserProfile = ({ user, onLogout }) => {
             category: '视频制作',
             description: '为可口可乐打造的夏季主题宣传片，通过鲜明的视觉语言和情感故事讲述品牌理念。',
             image: '/images/portfolio-1.jpg',
+            thumbnailCoverData: '/images/portfolio-1.jpg', // 添加缩略图数据字段
             tags: ['品牌宣传', '视频制作', '故事叙述']
           },
           {
@@ -49,6 +50,7 @@ const UserProfile = ({ user, onLogout }) => {
             category: '平面设计',
             description: '为耐克新款运动系列设计的平面广告，强调产品性能与时尚设计的完美结合。',
             image: '/images/portfolio-2.jpg',
+            thumbnailCoverData: '/images/portfolio-2.jpg', // 添加缩略图数据字段
             tags: ['平面广告', '品牌设计', '创意概念']
           },
           {
@@ -57,6 +59,7 @@ const UserProfile = ({ user, onLogout }) => {
             category: '数字营销',
             description: '为宝马设计的社交媒体整合营销活动，提升品牌在年轻消费群体中的影响力。',
             image: '/images/portfolio-3.jpg',
+            thumbnailCoverData: '/images/portfolio-3.jpg', // 添加缩略图数据字段
             tags: ['社交媒体', '数字营销', '内容策略']
           },
         ],

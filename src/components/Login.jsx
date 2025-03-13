@@ -68,20 +68,57 @@ const Login = ({ onLogin }) => {
         const result = await loginUser(formData.email, formData.password);
         
         if (result.success) {
-          // 登录成功，调用父组件传入的登录回调
-          onLogin({
-            email: formData.email,
-            uid: result.user.uid,
-            username: result.user.displayName || formData.email.split('@')[0],
-          });
+          // 保存认证令牌到localStorage
+          const token = result.user.accessToken || result.user.stsTokenManager?.accessToken;
+          localStorage.setItem('token', token);
+          
+          // 调用后端API进行登录验证
+          try {
+            const response = await fetch('/api/users/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                email: formData.email,
+                password: formData.password
+              })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              // 登录成功，调用父组件传入的登录回调
+              onLogin({
+                email: formData.email,
+                uid: result.user.uid,
+                username: result.user.displayName || formData.email.split('@')[0],
+                token: token
+              });
+            } else {
+              // 后端验证失败
+              setError(data.message || '登录失败，请检查邮箱和密码');
+              setLoading(false);
+            }
+          } catch (apiError) {
+            console.error('API调用错误:', apiError);
+            // 如果后端API调用失败，仍然使用Firebase认证结果
+            onLogin({
+              email: formData.email,
+              uid: result.user.uid,
+              username: result.user.displayName || formData.email.split('@')[0],
+              token: token
+            });
+          }
         } else {
           // 登录失败，设置错误信息
           setError(result.error || '登录失败，请检查邮箱和密码');
+          setLoading(false);
         }
       } catch (err) {
         // 捕获异常，设置错误信息
         setError('登录过程中发生错误: ' + err.message);
-      } finally {
         setLoading(false);
       }
     } else {
@@ -121,15 +158,51 @@ const Login = ({ onLogin }) => {
       const result = await registerUser(formData.email, formData.password);
       
       if (result.success) {
-        // 注册成功，显示成功消息并切换到登录标签
-        setSuccess('注册成功！请使用您的新账户登录');
-        setActiveTab(0);
-        // 清空密码和确认密码字段
-        setFormData({
-          ...formData,
-          password: '',
-          confirmPassword: ''
-        });
+        // 获取Firebase认证令牌
+        const token = result.user.accessToken || result.user.stsTokenManager?.accessToken;
+        
+        // 调用后端API注册用户
+        try {
+          const response = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: formData.username,
+              email: formData.email,
+              password: formData.password
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // 注册成功，显示成功消息并切换到登录标签
+            setSuccess('注册成功！请使用您的新账户登录');
+            setActiveTab(0);
+            // 清空密码和确认密码字段
+            setFormData({
+              ...formData,
+              password: '',
+              confirmPassword: ''
+            });
+          } else {
+            // 后端注册失败
+            setError(data.message || '注册失败，请稍后再试');
+          }
+        } catch (apiError) {
+          console.error('API调用错误:', apiError);
+          // 如果后端API调用失败，仍然显示注册成功
+          setSuccess('注册成功！请使用您的新账户登录');
+          setActiveTab(0);
+          // 清空密码和确认密码字段
+          setFormData({
+            ...formData,
+            password: '',
+            confirmPassword: ''
+          });
+        }
       } else {
         // 注册失败，设置错误信息
         setError(result.error || '注册失败，请稍后再试');
@@ -196,31 +269,54 @@ const Login = ({ onLogin }) => {
           
           {/* 标题，使用渐变文字效果 */}
           <Typography 
-            variant="h4" // 标题大小
-            component="h1" // 渲染为h1标签
-            align="center" // 居中对齐
-            gutterBottom // 底部外边距
-            sx={{ 
-              fontWeight: 600, // 字体粗细
-              mb: 4, // 底部外边距
-              background: 'linear-gradient(90deg, #C9A47D, #E5D3B3)', // 文字渐变背景
-              WebkitBackgroundClip: 'text', // 背景裁剪为文字
-              WebkitTextFillColor: 'transparent', // 文字填充为透明
+            variant="h4" 
+            component="h1" 
+            align="center"
+            sx={{
+              mb: 4,
+              fontWeight: 700,
+              background: 'linear-gradient(135deg, #C9A47D 0%, #9E7B4F 100%)',
+              backgroundClip: 'text',
+              textFillColor: 'transparent',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
-            {activeTab === 0 ? '登录您的账户' : '创建新账户'}
+            {activeTab === 0 ? '欢迎回来' : '创建账户'}
           </Typography>
           
-          {/* 条件渲染错误提示，仅在有错误时显示 */}
+          {/* 错误提示 */}
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mb: 3,
+                borderRadius: 1,
+                backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                color: '#ff5252',
+                '& .MuiAlert-icon': {
+                  color: '#ff5252',
+                }
+              }}
+            >
               {error}
             </Alert>
           )}
           
-          {/* 条件渲染成功提示，仅在有成功消息时显示 */}
+          {/* 成功提示 */}
           {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
+            <Alert 
+              severity="success" 
+              sx={{ 
+                mb: 3,
+                borderRadius: 1,
+                backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                color: '#69f0ae',
+                '& .MuiAlert-icon': {
+                  color: '#69f0ae',
+                }
+              }}
+            >
               {success}
             </Alert>
           )}
@@ -230,20 +326,19 @@ const Login = ({ onLogin }) => {
             <form onSubmit={handleLoginSubmit}>
               {/* 邮箱输入框 */}
               <TextField
-                margin="normal" // 标准外边距
+                margin="normal" // 设置外边距
                 required // 必填字段
                 fullWidth // 宽度占满容器
-                id="email" // 输入框ID
-                label="邮箱" // 输入框标签
-                name="email" // 输入框名称
-                type="email" // 输入类型为邮箱
-                autoComplete="email" // 自动完成属性
+                id="email" // 元素ID
+                label="邮箱" // 标签文本
+                name="email" // 表单字段名
+                autoComplete="email" // 自动完成提示
                 autoFocus // 自动获取焦点
                 value={formData.email} // 绑定状态值
                 onChange={handleChange} // 绑定变更处理函数
                 sx={{
                   mb: 3, // 底部外边距
-                  '& .MuiOutlinedInput-root': { // 自定义输入框样式
+                  '& .MuiOutlinedInput-root': {
                     '& fieldset': {
                       borderColor: 'rgba(201, 164, 125, 0.2)', // 边框颜色
                     },
@@ -255,23 +350,23 @@ const Login = ({ onLogin }) => {
               />
               {/* 密码输入框 */}
               <TextField
-                margin="normal" // 标准外边距
-                required // 必填字段
-                fullWidth // 宽度占满容器
-                name="password" // 输入框名称
-                label="密码" // 输入框标签
-                type={showPassword ? 'text' : 'password'} // 根据状态切换输入类型
-                id="password" // 输入框ID
-                autoComplete="current-password" // 自动完成属性
-                value={formData.password} // 绑定状态值
-                onChange={handleChange} // 绑定变更处理函数
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="密码"
+                type={showPassword ? 'text' : 'password'} // 根据状态显示文本或密码
+                id="password"
+                autoComplete="current-password"
+                value={formData.password}
+                onChange={handleChange}
+                // 添加密码可见性切换按钮
                 InputProps={{
-                  // 在输入框末尾添加密码可见性切换按钮
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label="toggle password visibility" // 无障碍标签
-                        onClick={handleClickShowPassword} // 绑定点击处理函数
+                        aria-label="toggle password visibility"
+                        onClick={handleClickShowPassword}
                         edge="end" // 位于末尾
                       >
                         {/* 根据密码可见性状态显示不同图标 */}

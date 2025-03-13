@@ -14,9 +14,13 @@ const Header = ({ isLoggedIn, userData, onLogout }) => {
     setAnchorEl(null);
   };
   
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleMenuClose();
-    onLogout();
+    try {
+      await onLogout();
+    } catch (error) {
+      console.error('退出登录时发生错误:', error);
+    }
   };
   return (
     <AppBar position="static" color="transparent" elevation={0}>

@@ -196,7 +196,7 @@ const ResumePreview = ({ resumeData }) => {
                 <Box
                   sx={{
                     height: 200,
-                    backgroundImage: `url(${project.image})`,
+                    backgroundImage: `url(${project.thumbnailCoverData || project.image || project.fullImage})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     position: 'relative',

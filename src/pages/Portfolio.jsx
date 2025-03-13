@@ -103,21 +103,28 @@ const Portfolio = () => {
   
   // 处理作品上传成功
   const handleUploadSuccess = (newProject) => {
+    // 确保新项目的图片数据正确设置
+    const processedProject = {
+      ...newProject,
+      // 确保图片数据正确设置，按优先级使用可用的图片URL
+      image: newProject.image || newProject.thumbnailCoverUrl || newProject.imageUrl || newProject.fullImage
+    };
+    
+    // 添加调试日志
+    console.log('Portfolio组件接收到的项目数据:', newProject);
+    console.log('处理后的项目数据:', processedProject);
+    
     // 添加新作品到列表
-    const updatedProjects = [newProject, ...allProjects];
+    const updatedProjects = [processedProject, ...allProjects];
     setAllProjects(updatedProjects);
     
     // 确保在当前分类下也能看到新作品
-    if (selectedCategory === '全部' || selectedCategory === newProject.category) {
-      setFilteredProjects(prev => [newProject, ...prev]);
+    if (selectedCategory === '全部' || selectedCategory === processedProject.category) {
+      setFilteredProjects(prev => [processedProject, ...prev]);
     }
     
     // 关闭上传对话框
     handleCloseUploadDialog();
-    
-    // 添加调试信息
-    console.log('新作品已添加:', newProject);
-    console.log('更新后的作品列表:', updatedProjects);
   };
 
   return (
@@ -241,7 +248,7 @@ const Portfolio = () => {
                     <CardMedia
                       component="img"
                       height="220"
-                      image={project.image || (project.thumbnailCoverData || project.fullImage)}
+                      image={project.image}
                       alt={project.title}
                       sx={{
                         transition: 'transform 0.6s ease',

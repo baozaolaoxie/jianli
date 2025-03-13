@@ -195,14 +195,16 @@ const App = () => {
       const result = await logoutUser();
       
       if (result.success) {
-        // 从localStorage移除用户数据
+        // 从localStorage移除用户数据和认证令牌
         localStorage.removeItem('userData');
+        localStorage.removeItem('token');
         // 更新登录状态为未登录
         setIsLoggedIn(false);
         // 清空用户数据
         setUserData(null);
         // 登出后导航到首页
         navigate('/');
+        console.log('用户已成功登出');
       } else {
         console.error('登出失败:', result.error);
       }

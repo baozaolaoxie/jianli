@@ -228,8 +228,9 @@ const ShowYou = () => {
       // 处理文件数据
       file: newProject.thumbnailFile || null, // 使用缩略图作为主要显示
       fullContentFile: newProject.file || null, // 原始文件作为完整内容
-      image: newProject.thumbnailCoverData || newProject.coverData || null,
-      fullContentImage: newProject.coverData || null
+      image: newProject.thumbnailCoverData || newProject.image || newProject.fullImage || null, // 优先使用缩略图封面
+      thumbnailCoverData: newProject.thumbnailCoverData || newProject.image || null, // 确保缩略图数据存在
+      fullContentImage: newProject.fullImage || newProject.coverData || null // 保存完整图片数据
     };
 
     setResumeData(prev => ({
@@ -715,7 +716,7 @@ const ShowYou = () => {
                         <Box
                           sx={{
                             height: 180,
-                            backgroundImage: `url(${project.image || '/images/portfolio-1.jpg'})`,
+                            backgroundImage: `url(${project.thumbnailCoverData || project.image || project.fullImage || '/images/portfolio-1.jpg'})`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             position: 'relative',

@@ -25,17 +25,19 @@ app.use(express.urlencoded({ extended: true })); // 解析URL编码的请求体
 import userRoutes from './routes/userRoutes.js';
 import resumeRoutes from './routes/resumeRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
+import storageRoutes from './routes/storageRoutes.js';
 
 // 使用路由
 app.use('/api/users', userRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/portfolios', portfolioRoutes);
+app.use('/api/storage', storageRoutes);
 
 // 静态文件服务
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 定义端口
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // 启动服务器 - 使用模拟数据而不是连接MongoDB
 console.log('使用模拟数据服务进行开发测试');

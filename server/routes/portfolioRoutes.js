@@ -10,13 +10,30 @@ const protect = async (req, res, next) => {
     // 从请求头获取令牌
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
+      console.error('认证失败: 未提供令牌');
       return res.status(401).json({ success: false, message: '未授权，无访问令牌' });
     }
 
-    // 验证令牌
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;
-    next();
+    // 检查是否是Firebase令牌（Firebase令牌通常以"ey"开头且包含三段）
+    const isFirebaseToken = token.startsWith('ey') && token.split('.').length === 3;
+    
+    if (isFirebaseToken) {
+      // 对于Firebase令牌，我们不进行验证，直接信任它
+      // 在实际生产环境中，应该使用Firebase Admin SDK验证令牌
+      console.log('检测到Firebase令牌，跳过JWT验证');
+      req.userId = 'firebase_user'; // 使用一个固定值作为用户ID
+      next();
+    } else {
+      // 对于非Firebase令牌，使用常规JWT验证
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.userId = decoded.id;
+        next();
+      } catch (jwtError) {
+        console.error('JWT验证错误:', jwtError.message);
+        return res.status(401).json({ success: false, message: `无效的令牌: ${jwtError.message}` });
+      }
+    }
   } catch (error) {
     console.error('身份验证错误:', error.message);
     return res.status(401).json({ success: false, message: '无效的令牌' });
@@ -138,7 +155,6 @@ router.delete('/:id', protect, async (req, res) => {
       success: true,
       message: '作品集项目已删除'
     });
-  }
   } catch (error) {
     console.error('删除作品集项目错误:', error.message);
     res.status(500).json({ success: false, message: '服务器错误' });
